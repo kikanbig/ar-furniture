@@ -215,10 +215,10 @@
             return new Promise((resolve) => {
                 const loader = new THREE.GLTFLoader();
                 
-                addLog('🪑 Загрузка кресла chair-modern.glb...');
+                addLog('🪑 Загрузка красивого кресла AR-Code-1683008719374.glb...');
                 
                 loader.load(
-                    '/models/chair-modern.glb',
+                    '/models/AR-Code-1683008719374.glb',
                     function(gltf) {
                         chairTemplate = gltf.scene.clone();
                         chairTemplate.scale.set(0.3, 0.3, 0.3);
