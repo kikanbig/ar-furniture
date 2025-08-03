@@ -141,8 +141,8 @@
                 // Создаем кресла для каждого working space (как в Debug Spaces)
                 await createChairsForSpaces();
                 
-                // Запуск
-                session.requestAnimationFrame(onXRFrame);
+                // Запуск обычной анимации
+                animate();
                 
                 startBtn.innerHTML = '✅ CHAIR WORKING АКТИВЕН';
                 status.classList.remove('hidden');
@@ -179,24 +179,14 @@
         async function setupRenderer() {
             addLog('🔧 Настройка рендерера...');
             
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl', { 
-                xrCompatible: true,
-                antialias: true,
-                alpha: true,
-                depth: true,
-                stencil: true
-            });
-            
+            // Создаем ОБЫЧНЫЙ Three.js рендерер для красивого отображения
             renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                context: gl,
-                alpha: true,
                 antialias: true,
+                alpha: true,
                 preserveDrawingBuffer: true
             });
             
-            // ВАЖНЫЕ настройки для корректного отображения текстур
+            // СТАНДАРТНЫЕ настройки для красивого отображения текстур
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.outputEncoding = THREE.sRGBEncoding;
@@ -205,31 +195,31 @@
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
-            renderer.xr.enabled = true;
-            renderer.xr.setSession(session);
+            // Добавляем рендерер на страницу
+            document.body.appendChild(renderer.domElement);
+            renderer.domElement.style.position = 'fixed';
+            renderer.domElement.style.top = '0';
+            renderer.domElement.style.left = '0';
+            renderer.domElement.style.zIndex = '1000';
+            renderer.domElement.style.pointerEvents = 'none';
             
-            const baseLayer = new XRWebGLLayer(session, gl);
-            await session.updateRenderState({ baseLayer: baseLayer });
-            
-            addLog('✅ Рендерер готов с правильными настройками для текстур');
+            addLog('✅ Обычный рендерер готов для красивого отображения');
         }
 
         function setupScene() {
             addLog('🎨 Создание сцены...');
             
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 5);
             
-            // ПРАВИЛЬНОЕ освещение для реалистичных материалов
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // СТАНДАРТНОЕ освещение для красивого отображения
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
             scene.add(ambientLight);
             
             // Основной направленный свет
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 5, 5);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
             
             // Заполняющий свет
@@ -237,12 +227,7 @@
             fillLight.position.set(-5, 5, -5);
             scene.add(fillLight);
             
-            // Верхний свет
-            const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            topLight.position.set(0, 10, 0);
-            scene.add(topLight);
-            
-            addLog('✅ Сцена готова с правильным освещением для текстур');
+            addLog('✅ Сцена готова со стандартным освещением');
         }
 
         async function loadChair() {
@@ -341,8 +326,8 @@
             // ТОЛЬКО ОДНО кресло
             const chair = chairTemplate.clone();
             
-            // Позиция - 1 метр перед камерой
-            chair.position.set(0, 0, -1);
+                            // Позиция - в центре сцены
+                chair.position.set(0, 0, 0);
             scene.add(chair);
             
             objects.push({
@@ -355,8 +340,8 @@
             addLog('📦 Создано кресел: 1');
         }
 
-        function onXRFrame(time, frame) {
-            session.requestAnimationFrame(onXRFrame);
+        function animate() {
+            requestAnimationFrame(animate);
             frameCount++;
             
             // Обновляем статус
@@ -372,23 +357,7 @@
                         addLog(`  Кресло: ${item.position.x.toFixed(1)}, ${item.position.y.toFixed(1)}, ${item.position.z.toFixed(1)}`);
                     });
                 }
-                
-                if (frameCount === 180) {
-                    addLog('🤔 Все еще не видно кресло?');
-                    addLog('💡 Попробуйте:');
-                    addLog('- Поворачиваться МЕДЛЕННО');
-                    addLog('- Наклонять телефон вверх/вниз');
-                    addLog('- Подходить/отходить от стен');
-                    addLog('- Движения головой для активации tracking');
-                }
             }
-            
-            // СТАТИЧНОЕ кресло - НЕТ анимации
-            // objects.forEach((item, index) => {
-            //     if (item.object && item.object.rotation) {
-            //         item.object.rotation.y = rotationSpeed * (index + 1);
-            //     }
-            // });
             
             try {
                 renderer.render(scene, camera);
