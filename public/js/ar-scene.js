@@ -25,9 +25,6 @@ class ARFurnitureScene {
     }
     
     init() {
-        // Автоматически запросить доступ к камере
-        this.requestCameraAccess();
-        
         // Загрузить первую модель по умолчанию
         this.loadModel('cannoli');
         
@@ -35,92 +32,7 @@ class ARFurnitureScene {
         this.addEventListeners();
     }
     
-    async requestCameraAccess() {
-        try {
-            // Проверить поддержку getUserMedia
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('getUserMedia не поддерживается');
-            }
-            
-            // Показать сообщение о запросе камеры
-            document.getElementById('loading').innerHTML = `
-                <h2>Запрос доступа к камере</h2>
-                <p>Браузер запросит разрешение на доступ к камере</p>
-                <p style="font-size: 12px; color: #666;">Если запрос не появился, нажмите "Разрешить камеру"</p>
-                <button onclick="this.requestCameraAccess()" style="
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    padding: 10px 20px; 
-                    border-radius: 5px; 
-                    cursor: pointer;
-                    margin-top: 10px;
-                ">Разрешить камеру</button>
-            `;
-            
-            // Запросить доступ к камере
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment', // Использовать заднюю камеру
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
-            });
-            
-            console.log('Доступ к камере получен');
-            
-            // Показать успешное сообщение
-            document.getElementById('loading').innerHTML = `
-                <h2>Камера подключена!</h2>
-                <p>Наведите камеру на поверхность для AR</p>
-                <div style="width: 50px; height: 50px; border: 3px solid #f3f3f3; border-top: 3px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-            `;
-            
-            // Скрыть загрузку через 2 секунды
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-            }, 2000);
-            
-            // Остановить поток после инициализации AR
-            setTimeout(() => {
-                stream.getTracks().forEach(track => track.stop());
-            }, 3000);
-            
-        } catch (error) {
-            console.error('Ошибка доступа к камере:', error);
-            
-            // Показать детальную инструкцию пользователю
-            document.getElementById('loading').innerHTML = `
-                <h2>Требуется доступ к камере</h2>
-                <p>Для работы AR необходимо разрешить доступ к камере</p>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
-                    <strong>Как разрешить камеру:</strong>
-                    <ul style="text-align: left; margin: 10px 0;">
-                        <li>Нажмите на значок камеры в адресной строке</li>
-                        <li>Выберите "Разрешить"</li>
-                        <li>Или нажмите кнопку ниже</li>
-                    </ul>
-                </div>
-                <button onclick="this.requestCameraAccess()" style="
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    padding: 10px 20px; 
-                    border-radius: 5px; 
-                    cursor: pointer;
-                    margin-right: 10px;
-                ">Попробовать снова</button>
-                <button onclick="location.reload()" style="
-                    background: #6c757d; 
-                    color: white; 
-                    border: none; 
-                    padding: 10px 20px; 
-                    border-radius: 5px; 
-                    cursor: pointer;
-                ">Обновить страницу</button>
-            `;
-        }
-    }
+
     
     loadModel(modelKey) {
         const modelData = this.models[modelKey];
