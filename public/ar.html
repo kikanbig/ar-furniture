@@ -213,8 +213,89 @@
     </div>
     
     <script>
-        // ПОЛНАЯ ДИАГНОСТИКА И ПРЯМАЯ РАБОТА С КАМЕРОЙ
+        // ГИБРИДНАЯ ВЕРСИЯ: AR.js с таймаутом + диагностика
         async function startAR() {
+            const btn = document.getElementById('start-ar-btn');
+            const loading = document.getElementById('loading');
+            const debugInfo = document.getElementById('debug-info');
+            
+            // Показать красивую загрузку AR.js
+            btn.innerHTML = '⏳ ЗАГРУЗКА AR...';
+            btn.disabled = true;
+            btn.style.background = '#666';
+            
+            loading.innerHTML = `
+                <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px;">
+                    <h2 style="margin: 0 0 20px 0;">🎯 AR ЗАГРУЖАЕТСЯ...</h2>
+                    <div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+                    <p style="font-size: 18px; margin: 20px 0;">Инициализируем AR.js...</p>
+                    <p style="font-size: 14px; opacity: 0.8;">Это может занять 30-60 секунд</p>
+                    <div id="ar-progress" style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 10px; margin: 20px 0;">
+                        <div style="background: white; height: 100%; border-radius: 10px; width: 0%; transition: width 1s;" id="progress-bar"></div>
+                    </div>
+                </div>
+            `;
+            
+            // Показать AR сцену
+            loading.style.display = 'block';
+            debugInfo.style.display = 'none';
+            
+            const arContainer = document.getElementById('ar-container');
+            arContainer.style.display = 'block';
+            
+            // Прогресс бар
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressTimer = setInterval(() => {
+                progress += 2;
+                if (progressBar) {
+                    progressBar.style.width = Math.min(progress, 95) + '%';
+                }
+                if (progress >= 100) {
+                    clearInterval(progressTimer);
+                }
+            }, 500);
+            
+            // Таймаут - если AR.js не загрузился за 45 секунд
+            setTimeout(() => {
+                if (loading.style.display !== 'none') {
+                    console.log('⏰ Таймаут AR.js - переключаемся на диагностику');
+                    clearInterval(progressTimer);
+                    arContainer.style.display = 'none';
+                    startDiagnosticMode();
+                }
+            }, 45000);
+            
+            // Проверка успешной загрузки AR
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+                scene.addEventListener('arjs-video-loaded', () => {
+                    console.log('📹 AR.js успешно загружен!');
+                    clearInterval(progressTimer);
+                    loading.style.display = 'none';
+                });
+                
+                scene.addEventListener('loaded', () => {
+                    console.log('🎮 A-Frame сцена готова');
+                    setTimeout(() => {
+                        if (loading.style.display !== 'none') {
+                            loading.innerHTML = `
+                                <div style="text-align: center; padding: 20px; background: #4CAF50; color: white; border-radius: 15px;">
+                                    <h3>✅ AR загружен!</h3>
+                                    <p>Наведите камеру на маркер</p>
+                                </div>
+                            `;
+                            setTimeout(() => {
+                                loading.style.display = 'none';
+                            }, 3000);
+                        }
+                    }, 5000);
+                });
+            }
+        }
+        
+        // Диагностический режим если AR.js не сработал
+        async function startDiagnosticMode() {
             const btn = document.getElementById('start-ar-btn');
             const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
