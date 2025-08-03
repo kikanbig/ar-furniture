@@ -25,16 +25,56 @@ class ARFurnitureScene {
     }
     
     init() {
-        // Скрыть загрузку после инициализации
-        setTimeout(() => {
-            document.getElementById('loading').style.display = 'none';
-        }, 2000);
+        // Автоматически запросить доступ к камере
+        this.requestCameraAccess();
         
         // Загрузить первую модель по умолчанию
         this.loadModel('cannoli');
         
         // Добавить обработчики событий
         this.addEventListeners();
+    }
+    
+    async requestCameraAccess() {
+        try {
+            // Запросить доступ к камере
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment', // Использовать заднюю камеру
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            });
+            
+            console.log('Доступ к камере получен');
+            
+            // Скрыть загрузку после получения доступа к камере
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 1000);
+            
+            // Остановить поток после инициализации AR
+            setTimeout(() => {
+                stream.getTracks().forEach(track => track.stop());
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Ошибка доступа к камере:', error);
+            
+            // Показать инструкцию пользователю
+            document.getElementById('loading').innerHTML = `
+                <h2>Требуется доступ к камере</h2>
+                <p>Для работы AR необходимо разрешить доступ к камере</p>
+                <button onclick="location.reload()" style="
+                    background: #007bff; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 20px; 
+                    border-radius: 5px; 
+                    cursor: pointer;
+                ">Попробовать снова</button>
+            `;
+        }
     }
     
     loadModel(modelKey) {
