@@ -358,6 +358,11 @@ app.get('/camera-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'camera-attached-test.html'));
 });
 
+// 📷 CAMERA TEST ALTERNATIVE
+app.get('/camera-attach', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'camera-attached-test.html'));
+});
+
 // Обработка ошибок
 app.use((err, req, res, next) => {
     console.error(err.stack);
