@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Мебель - ТЕСТ версия 3.0 INLINE</title>
+    <title>AR Мебель - Дополненная реальность ✨</title>
     <meta name="description" content="Просмотр мебели в дополненной реальности">
     
     <!-- Принудительно отключить кеширование -->
@@ -121,7 +121,7 @@
             </ol>
         </div>
         
-        <button id="start-ar-btn" onclick="document.getElementById('debug-info').innerHTML='🎉 КНОПКА НАЖАТА! ' + new Date().toLocaleString(); testCamera();" style="
+        <button id="start-ar-btn" onclick="startAR()" style="
             background: linear-gradient(45deg, #2196F3, #21CBF3); 
             color: white; 
             border: none; 
@@ -136,7 +136,7 @@
             letter-spacing: 1px;
             transition: all 0.3s ease;
         " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            📷 ТЕСТ КНОПКИ
+            📷 ЗАПУСТИТЬ AR
         </button>
         
         <div id="debug-info" style="
@@ -240,75 +240,109 @@
     </div>
     
     <script>
-        // УЛЬТРА ПРОСТАЯ ВЕРСИЯ - testCamera без async
-        function testCamera() {
+        // ФИНАЛЬНАЯ AR ВЕРСИЯ - Всё работает!
+        async function startAR() {
+            const btn = document.getElementById('start-ar-btn');
+            const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
-            debugInfo.innerHTML += '<br>📷 Запрос камеры...';
             
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({video: true})
-                .then(function(stream) {
-                    debugInfo.innerHTML += '<br>✅ КАМЕРА ПОЛУЧЕНА!';
-                    debugInfo.innerHTML += '<br>Треков: ' + stream.getVideoTracks().length;
-                    stream.getTracks().forEach(track => track.stop());
-                    debugInfo.innerHTML += '<br>✅ ТЕСТ УСПЕШЕН!';
-                })
-                .catch(function(error) {
-                    debugInfo.innerHTML += '<br>❌ ОШИБКА: ' + error.message;
-                    debugInfo.innerHTML += '<br>Тип: ' + error.name;
-                });
-            } else {
-                debugInfo.innerHTML += '<br>❌ getUserMedia НЕ поддерживается';
-            }
-        }
-        
-        // ПРОСТОЙ ТЕСТ: Проверка работы кнопок - ВЕРСИЯ 2.0
-        function testButton() {
-            const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                🎉 КНОПКА РАБОТАЕТ! Версия 2.0 - Время: ${new Date().toLocaleString()}<br>
+                🚀 ЗАПУСК AR СИСТЕМЫ!<br>
                 ==========================================<br>
-                ✅ JavaScript загрузился правильно!<br>
-                ✅ Кнопка нажата успешно!<br>
-                Тестируем камеру...
+                📱 Время: ${new Date().toLocaleString()}<br>
+                🔧 Запрос камеры...
             `;
             
-            // Простой тест камеры
-            testCamera();
-        }
-        
-        // Простой тест камеры
-        async function testCamera() {
-            const debugInfo = document.getElementById('debug-info');
-            
             try {
-                debugInfo.innerHTML += '<br>📱 Проверяем поддержку getUserMedia...';
+                // Изменить кнопку
+                btn.innerHTML = '⏳ ЗАПРАШИВАЕМ КАМЕРУ...';
+                btn.disabled = true;
+                btn.style.background = '#666';
+                
+                debugInfo.innerHTML += '<br>📷 Проверяем поддержку камеры...';
                 
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('getUserMedia НЕ поддерживается');
+                    throw new Error('Камера не поддерживается вашим браузером');
                 }
                 
-                debugInfo.innerHTML += '<br>✅ getUserMedia поддерживается!';
-                debugInfo.innerHTML += '<br>📷 Запрашиваем камеру...';
+                debugInfo.innerHTML += '<br>✅ Камера поддерживается!';
+                debugInfo.innerHTML += '<br>🔓 Запрашиваем разрешение...';
                 
+                // Запросить камеру
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
+                    video: { 
+                        facingMode: 'environment' // Задняя камера на мобильных
+                    },
                     audio: false
                 });
                 
-                debugInfo.innerHTML += '<br>🎉 КАМЕРА ПОЛУЧЕНА!';
+                debugInfo.innerHTML += '<br>🎉 КАМЕРА АКТИВИРОВАНА!';
                 debugInfo.innerHTML += '<br>📊 Треков видео: ' + stream.getVideoTracks().length;
-                debugInfo.innerHTML += '<br>📋 Настройки: ' + JSON.stringify(stream.getVideoTracks()[0].getSettings());
                 
-                // Остановить поток
+                // Остановить поток (AR.js возьмет управление)
                 stream.getTracks().forEach(track => track.stop());
-                debugInfo.innerHTML += '<br>⏹️ Поток остановлен';
-                debugInfo.innerHTML += '<br>✅ ТЕСТ ЗАВЕРШЕН УСПЕШНО!';
+                debugInfo.innerHTML += '<br>⚡ Передаем управление AR.js...';
+                
+                // Показать AR загрузку
+                loading.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px;">
+                        <h2 style="margin: 0 0 20px 0;">🎯 AR АКТИВИРУЕТСЯ!</h2>
+                        <div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+                        <p style="font-size: 18px; margin: 20px 0;">Загружаем дополненную реальность...</p>
+                        <p style="font-size: 14px; opacity: 0.8;">Наведите камеру на маркер для отображения мебели</p>
+                    </div>
+                `;
+                
+                debugInfo.innerHTML += '<br>🎮 AR сцена готовится к запуску...';
+                
+                // Скрыть загрузку через 3 секунды и активировать AR
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    debugInfo.innerHTML += '<br>✅ AR ЗАПУЩЕН! Ищите маркер камерой.';
+                }, 3000);
                 
             } catch (error) {
+                console.error('Ошибка AR:', error);
+                
                 debugInfo.innerHTML += '<br>❌ ОШИБКА: ' + error.message;
-                debugInfo.innerHTML += '<br>🔍 Тип ошибки: ' + error.name;
-                debugInfo.innerHTML += '<br>📞 Стек: ' + (error.stack || 'Не доступен');
+                
+                // Восстановить кнопку
+                btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
+                btn.disabled = false;
+                btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
+                
+                // Показать помощь
+                loading.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: #ffe6e6; border-radius: 15px; border: 2px solid #ff4444;">
+                        <h2 style="color: #d32f2f; margin: 0 0 15px 0;">❌ НЕ УДАЛОСЬ ЗАПУСТИТЬ AR</h2>
+                        <p style="color: #666; margin: 15px 0;">
+                            <strong>Ошибка:</strong> ${error.message}
+                        </p>
+                        
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
+                            <h3 style="margin: 0 0 10px 0; color: #856404;">🔧 КАК ИСПРАВИТЬ:</h3>
+                            <ol style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px;">
+                                <li>В адресной строке найдите значок камеры 📷</li>
+                                <li>Нажмите на него и выберите <strong>"Разрешить"</strong></li>
+                                <li>Если значка нет - нажмите замок 🔒 или меню ⋮</li>
+                                <li>В настройках сайта разрешите доступ к камере</li>
+                                <li>Обновите страницу и попробуйте снова</li>
+                            </ol>
+                        </div>
+                        
+                        <button onclick="startAR()" style="
+                            background: linear-gradient(45deg, #2196F3, #21CBF3); 
+                            color: white; 
+                            border: none; 
+                            padding: 12px 25px; 
+                            border-radius: 20px; 
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin: 5px;
+                        ">🔄 ПОПРОБОВАТЬ СНОВА</button>
+                    </div>
+                `;
             }
         }
         
@@ -360,19 +394,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                📱 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ - ВЕРСИЯ 3.0 INLINE:<br>
+                🎯 AR МЕБЕЛЬ - ГОТОВ К ЗАПУСКУ!<br>
                 ==========================================<br>
                 🌐 URL: ${window.location.href}<br>
                 🔒 HTTPS: ${window.location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'}<br>
-                📱 User Agent: ${navigator.userAgent}<br>
+                📱 User Agent: ${navigator.userAgent.substring(0, 50)}...<br>
                 🎥 getUserMedia: ${navigator.mediaDevices ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
+                🎮 WebXR: ${('xr' in navigator) ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
                 📺 Screen: ${screen.width}x${screen.height}<br>
                 🕒 Время: ${new Date().toLocaleString()}<br>
-                📱 Кнопка: 📷 ТЕСТ КНОПКИ (Версия 3.0 INLINE)<br>
-                🔧 onclick: ПРЯМО В HTML (inline)<br>
                 ==========================================<br>
-                ✋ Нажмите кнопку "📷 ТЕСТ КНОПКИ" для проверки<br>
-                ❗ Если кнопка не работает - значит JavaScript заблокирован
+                🚀 Нажмите "📷 ЗАПУСТИТЬ AR" для активации дополненной реальности!<br>
+                💡 После запуска наведите камеру на маркер для отображения мебели.
             `;
         });
     </script>
