@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Мебель - Дополненная реальность</title>
+    <title>AR Мебель - ТЕСТ версия 2.0</title>
     <meta name="description" content="Просмотр мебели в дополненной реальности">
+    
+    <!-- Принудительно отключить кеширование -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     
     <!-- Разрешения для камеры и микрофона -->
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=*, geolocation=*">
@@ -223,12 +228,14 @@
     </div>
     
     <script>
-        // ПРОСТОЙ ТЕСТ: Проверка работы кнопок
+        // ПРОСТОЙ ТЕСТ: Проверка работы кнопок - ВЕРСИЯ 2.0
         function testButton() {
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                🎉 КНОПКА РАБОТАЕТ! Время: ${new Date().toLocaleString()}<br>
+                🎉 КНОПКА РАБОТАЕТ! Версия 2.0 - Время: ${new Date().toLocaleString()}<br>
                 ==========================================<br>
+                ✅ JavaScript загрузился правильно!<br>
+                ✅ Кнопка нажата успешно!<br>
                 Тестируем камеру...
             `;
             
@@ -319,7 +326,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                📱 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ:<br>
+                📱 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ - ВЕРСИЯ 2.0:<br>
                 ==========================================<br>
                 🌐 URL: ${window.location.href}<br>
                 🔒 HTTPS: ${window.location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'}<br>
@@ -327,8 +334,9 @@
                 🎥 getUserMedia: ${navigator.mediaDevices ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
                 📺 Screen: ${screen.width}x${screen.height}<br>
                 🕒 Время: ${new Date().toLocaleString()}<br>
+                📱 Кнопка: 📷 ТЕСТ КНОПКИ (Версия 2.0)<br>
                 ==========================================<br>
-                ✋ Нажмите кнопку "ТЕСТ КНОПКИ" для проверки камеры
+                ✋ Нажмите кнопку "📷 ТЕСТ КНОПКИ" для проверки
             `;
         });
     </script>
