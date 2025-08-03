@@ -204,11 +204,20 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // МАКСИМАЛЬНОЕ освещение (как в Debug Spaces)
-            const light = new THREE.AmbientLight(0xffffff, 5.0);
-            scene.add(light);
+            // ЯРКОЕ освещение для текстурированных материалов
+            const ambientLight = new THREE.AmbientLight(0xffffff, 3.0);
+            scene.add(ambientLight);
             
-            addLog('✅ Сцена готова');
+            // Направленный свет для лучшего освещения текстур
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Дополнительный свет для деталей
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+            scene.add(hemisphereLight);
+            
+            addLog('✅ Сцена готова с ярким освещением');
         }
 
         async function loadChair() {
@@ -223,15 +232,31 @@
                         chairTemplate = gltf.scene.clone();
                         chairTemplate.scale.set(0.3, 0.3, 0.3);
                         
-                        // ПРИМЕНЯЕМ ПРОВЕРЕННЫЙ ПОДХОД из Debug Spaces
+                        // СОХРАНЯЕМ ОРИГИНАЛЬНЫЕ МАТЕРИАЛЫ, но делаем их видимыми
                         chairTemplate.traverse(function(child) {
-                            if (child.isMesh) {
-                                // Заменяем ВСЕ материалы на MeshBasicMaterial с emissive
-                                child.material = new THREE.MeshBasicMaterial({
-                                    color: 0x8B4513, // Коричневый цвет кресла
-                                    emissive: 0x332211, // Коричневое свечение
-                                    emissiveIntensity: 0.3
-                                });
+                            if (child.isMesh && child.material) {
+                                // Сохраняем оригинальный материал
+                                const originalMaterial = child.material;
+                                
+                                // Если это MeshStandardMaterial или MeshPhongMaterial, делаем его ярче
+                                if (originalMaterial.isMeshStandardMaterial || originalMaterial.isMeshPhongMaterial) {
+                                    // Увеличиваем яркость
+                                    originalMaterial.emissive = new THREE.Color(0x222222);
+                                    originalMaterial.emissiveIntensity = 0.2;
+                                    
+                                    // Увеличиваем интенсивность освещения
+                                    if (originalMaterial.metalness !== undefined) {
+                                        originalMaterial.metalness = 0.1; // Уменьшаем металличность
+                                    }
+                                    if (originalMaterial.roughness !== undefined) {
+                                        originalMaterial.roughness = 0.8; // Увеличиваем шероховатость
+                                    }
+                                }
+                                // Если это MeshBasicMaterial, добавляем emissive
+                                else if (originalMaterial.isMeshBasicMaterial) {
+                                    originalMaterial.emissive = new THREE.Color(0x222222);
+                                    originalMaterial.emissiveIntensity = 0.3;
+                                }
                             }
                         });
                         
