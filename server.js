@@ -16,7 +16,7 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'"],
-            mediaSrc: ["'self'"],
+            mediaSrc: ["'self'", "camera:", "microphone:"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: []
         }

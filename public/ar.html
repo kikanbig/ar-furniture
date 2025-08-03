@@ -6,15 +6,19 @@
     <title>AR Мебель - Дополненная реальность</title>
     <meta name="description" content="Просмотр мебели в дополненной реальности">
     
+    <!-- Разрешения для камеры и микрофона -->
+    <meta http-equiv="Permissions-Policy" content="camera=*, microphone=*, geolocation=*">
+    <meta http-equiv="Feature-Policy" content="camera 'self'; microphone 'self'">
+    
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- WebXR Polyfill -->
     <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     
-    <!-- AR.js -->
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
+    <!-- AR.js - загружаем после получения камеры -->
+    <!-- <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script> -->
     
     <style>
         body {
@@ -202,6 +206,29 @@
     </div>
     
     <script>
+        // Функция загрузки A-Frame после получения камеры
+        async function loadAFrame() {
+            return new Promise((resolve, reject) => {
+                // Загрузить A-Frame
+                const aframeScript = document.createElement('script');
+                aframeScript.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
+                aframeScript.onload = () => {
+                    console.log('A-Frame загружен');
+                    // Загрузить AR.js
+                    const arjsScript = document.createElement('script');
+                    arjsScript.src = 'https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js';
+                    arjsScript.onload = () => {
+                        console.log('AR.js загружен');
+                        resolve();
+                    };
+                    arjsScript.onerror = reject;
+                    document.head.appendChild(arjsScript);
+                };
+                aframeScript.onerror = reject;
+                document.head.appendChild(aframeScript);
+            });
+        }
+        
         // Простая и надежная функция запуска AR
         async function startAR() {
             const btn = document.getElementById('start-ar-btn');
@@ -237,6 +264,16 @@
                 debugInfo.innerHTML += '<br>✅ КАМЕРА ПОЛУЧЕНА!';
                 debugInfo.innerHTML += '<br>Треков видео: ' + stream.getVideoTracks().length;
                 
+                // Остановить поток сразу после получения
+                if (stream && stream.getTracks) {
+                    stream.getTracks().forEach(track => track.stop());
+                    debugInfo.innerHTML += '<br>Поток камеры остановлен';
+                }
+                
+                // Загрузить A-Frame после получения камеры
+                debugInfo.innerHTML += '<br>Загружаем A-Frame...';
+                await loadAFrame();
+                
                 // Показать успех
                 loading.innerHTML = `
                     <div style="text-align: center; padding: 40px;">
@@ -247,11 +284,8 @@
                     </div>
                 `;
                 
-                // Остановить поток через 3 секунды и скрыть загрузку
+                // Скрыть загрузку через 3 секунды
                 setTimeout(() => {
-                    if (stream && stream.getTracks) {
-                        stream.getTracks().forEach(track => track.stop());
-                    }
                     loading.style.display = 'none';
                     debugInfo.innerHTML += '<br>AR сцена активирована!';
                 }, 3000);
