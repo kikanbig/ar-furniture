@@ -213,83 +213,34 @@
     </div>
     
     <script>
-        // ПРОСТАЯ AR ВЕРСИЯ - без лишних усложнений
-        async function startAR() {
+        // ПРОСТАЯ AR ВЕРСИЯ - запускаем через событие A-Frame
+        function startAR() {
             const btn = document.getElementById('start-ar-btn');
             const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
             
-            try {
-                // Изменить кнопку
-                btn.innerHTML = '⏳ ЗАПУСКАЕМ AR...';
-                btn.disabled = true;
-                btn.style.background = '#666';
-                
-                debugInfo.innerHTML = '🚀 Запрос камеры...';
-                
-                // Простой запрос камеры
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
-                    audio: false
-                });
-                
-                debugInfo.innerHTML = '✅ Камера получена! Запускаем AR...';
-                
-                // Остановить поток - AR.js сам подключится к камере
-                stream.getTracks().forEach(track => track.stop());
-                
-                // Показать AR сцену СРАЗУ
-                loading.style.display = 'none';
-                debugInfo.style.display = 'none';
-                
-                const arContainer = document.getElementById('ar-container');
-                arContainer.style.display = 'block';
-                
-                console.log('✅ AR активирован!');
-                
-            } catch (error) {
-                console.error('Ошибка AR:', error);
-                
-                debugInfo.innerHTML += '<br>❌ ОШИБКА: ' + error.message;
-                
-                // Восстановить кнопку
-                btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
-                btn.disabled = false;
-                btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
-                
-                // Показать помощь
-                loading.innerHTML = `
-                    <div style="text-align: center; padding: 20px; background: #ffe6e6; border-radius: 15px; border: 2px solid #ff4444;">
-                        <h2 style="color: #d32f2f; margin: 0 0 15px 0;">❌ НЕ УДАЛОСЬ ЗАПУСТИТЬ AR</h2>
-                        <p style="color: #666; margin: 15px 0;">
-                            <strong>Ошибка:</strong> ${error.message}
-                        </p>
-                        
-                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
-                            <h3 style="margin: 0 0 10px 0; color: #856404;">🔧 КАК ИСПРАВИТЬ:</h3>
-                            <ol style="margin: 0; padding-left: 20px; color: #856404; font-size: 14px;">
-                                <li>В адресной строке найдите значок камеры 📷</li>
-                                <li>Нажмите на него и выберите <strong>"Разрешить"</strong></li>
-                                <li>Если значка нет - нажмите замок 🔒 или меню ⋮</li>
-                                <li>В настройках сайта разрешите доступ к камере</li>
-                                <li>Обновите страницу и попробуйте снова</li>
-                            </ol>
-                        </div>
-                        
-                        <button onclick="startAR()" style="
-                            background: linear-gradient(45deg, #2196F3, #21CBF3); 
-                            color: white; 
-                            border: none; 
-                            padding: 12px 25px; 
-                            border-radius: 20px; 
-                            cursor: pointer;
-                            font-size: 14px;
-                            font-weight: bold;
-                            margin: 5px;
-                        ">🔄 ПОПРОБОВАТЬ СНОВА</button>
-                    </div>
-                `;
+            // Изменить кнопку
+            btn.innerHTML = '⏳ ЗАПУСКАЕМ AR...';
+            btn.disabled = true;
+            btn.style.background = '#666';
+            
+            debugInfo.innerHTML = '🚀 Активируем AR камеру...';
+            
+            // Показать AR сцену СРАЗУ - AR.js сам запросит камеру
+            loading.style.display = 'none';
+            debugInfo.style.display = 'none';
+            
+            const arContainer = document.getElementById('ar-container');
+            arContainer.style.display = 'block';
+            
+            // Принудительно запустить AR.js
+            const scene = document.querySelector('a-scene');
+            if (scene && scene.systems && scene.systems.arjs) {
+                console.log('🎯 Принудительный запуск AR.js');
+                scene.systems.arjs.start();
             }
+            
+            console.log('✅ AR сцена показана!');
         }
         
         // Функция копирования отладочной информации
@@ -344,6 +295,26 @@
                 📱 Экран: ${screen.width}x${screen.height} | 🎥 Камера: ${navigator.mediaDevices ? '✅' : '❌'}<br>
                 🚀 Нажмите "ЗАПУСТИТЬ AR" ниже
             `;
+            
+            // События A-Frame для диагностики
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+                scene.addEventListener('loaded', () => {
+                    console.log('🎮 A-Frame сцена загружена');
+                });
+                
+                scene.addEventListener('arjs-video-loaded', () => {
+                    console.log('📹 AR.js видео загружено');
+                });
+                
+                scene.addEventListener('camera-init', () => {
+                    console.log('📷 Камера инициализирована');
+                });
+                
+                scene.addEventListener('camera-error', (error) => {
+                    console.error('❌ Ошибка камеры:', error);
+                });
+            }
         });
     </script>
     <script src="js/ar-scene.js"></script>
