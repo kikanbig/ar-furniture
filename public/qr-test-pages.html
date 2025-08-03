@@ -172,16 +172,24 @@
                 <li><strong>✅ Найдена проблема:</strong> Не все материалы/объекты корректно рендерятся в WebXR AR</li>
                 <li><strong>✅ Найдено решение:</strong> MeshBasicMaterial + emissive + правильные reference spaces</li>
                 <li><strong>✅ Доказано работает:</strong> Debug Spaces показал мерцающие кубы!</li>
-                <li><strong>🎯 Используйте:</strong> Working Final - полностью рабочая версия с креслом</li>
+                <li><strong>🪑 РЕКОМЕНДУЕТСЯ:</strong> Chair Clean - только красивое кресло без цветного безумия</li>
             </ol>
         </div>
         
         <div class="qr-grid">
-            <!-- 🎉 Working Final - НОВАЯ РАБОЧАЯ ВЕРСИЯ -->
-            <div class="qr-card new" style="order: 1;">
+            <!-- 🪑 Chair Clean - ЧИСТОЕ КРЕСЛО -->
+            <div class="qr-card new" style="order: 1; border: 3px solid #8B4513;">
+                <h3>🪑 Chair Clean</h3>
+                <p><strong>🎯 ТОЛЬКО КРАСИВОЕ КРЕСЛО!</strong><br>
+                chair-modern.glb без цветных кубов и анимации</p>
+                <div id="qr-chair-clean" class="qr-code"></div>
+                <a href="ar-chair-clean.html" class="link">ar-chair-clean.html</a>
+            </div>
+            
+            <!-- 🎉 Working Final - РАБОЧАЯ ВЕРСИЯ -->
+            <div class="qr-card" style="order: 2;">
                 <h3>🎉 Working Final</h3>
-                <p><strong>✅ РАБОЧАЯ ВЕРСИЯ!</strong><br>
-                Основана на Debug Spaces + кресло chair-modern.glb</p>
+                <p>Рабочая версия с креслом + диагностические кубы</p>
                 <div id="qr-final" class="qr-code"></div>
                 <a href="ar-working-final.html" class="link">ar-working-final.html</a>
             </div>
@@ -249,6 +257,11 @@
         
         // Конфигурация страниц для QR-кодов
         const pages = [
+            {
+                id: 'qr-chair-clean',
+                url: baseURL + '/ar-chair-clean.html',
+                name: 'Chair Clean'
+            },
             {
                 id: 'qr-final',
                 url: baseURL + '/ar-working-final.html',
