@@ -162,7 +162,9 @@
             arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
             renderer="logarithmicDepthBuffer: true;"
             embedded
-            arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+            arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+            camera-init=""
+            camera-error="">
             
             <!-- AR маркер для размещения мебели -->
             <a-marker preset="hiro">
@@ -184,23 +186,35 @@
     <script>
         // Глобальная функция для запроса камеры
         async function requestCamera() {
+            console.log('Кнопка камеры нажата!');
+            
             const cameraBtn = document.getElementById('camera-btn');
             const loading = document.getElementById('loading');
             
+            if (!cameraBtn || !loading) {
+                console.error('Элементы не найдены!');
+                return;
+            }
+            
             try {
+                console.log('Начинаем запрос камеры...');
                 cameraBtn.textContent = '⏳ Запрашиваем...';
                 cameraBtn.disabled = true;
                 
-                // Запросить доступ к камере
+                // Проверить поддержку getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia не поддерживается в этом браузере');
+                }
+                
+                console.log('getUserMedia поддерживается, запрашиваем камеру...');
+                
+                // Запросить доступ к камере с более простыми параметрами
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    } 
+                    video: true,
+                    audio: false
                 });
                 
-                console.log('Камера подключена!');
+                console.log('Камера подключена!', stream);
                 
                 // Показать успешное сообщение
                 loading.innerHTML = `
@@ -217,7 +231,10 @@
                 
                 // Остановить поток после инициализации AR
                 setTimeout(() => {
-                    stream.getTracks().forEach(track => track.stop());
+                    if (stream && stream.getTracks) {
+                        stream.getTracks().forEach(track => track.stop());
+                        console.log('Поток камеры остановлен');
+                    }
                 }, 4000);
                 
             } catch (error) {
@@ -226,16 +243,18 @@
                 cameraBtn.textContent = '📷 Включить камеру';
                 cameraBtn.disabled = false;
                 
-                // Показать детальную инструкцию
+                // Показать детальную инструкцию с отладочной информацией
                 loading.innerHTML = `
                     <h2>❌ Ошибка доступа к камере</h2>
                     <p>Браузер заблокировал доступ к камере</p>
+                    <p style="font-size: 12px; color: #666;">Ошибка: ${error.message}</p>
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
                         <strong>Как исправить:</strong>
                         <ul style="margin: 10px 0; padding-left: 20px;">
                             <li>Нажмите на значок камеры 🔒 в адресной строке</li>
                             <li>Выберите "Разрешить" или "Allow"</li>
                             <li>Обновите страницу и попробуйте снова</li>
+                            <li>Убедитесь, что сайт открыт по HTTPS</li>
                         </ul>
                     </div>
                     <button onclick="requestCamera()" style="
@@ -262,6 +281,17 @@
                 `;
             }
         }
+        
+        // Проверить готовность DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM загружен, кнопка камеры готова');
+            const cameraBtn = document.getElementById('camera-btn');
+            if (cameraBtn) {
+                console.log('Кнопка камеры найдена:', cameraBtn);
+            } else {
+                console.error('Кнопка камеры не найдена!');
+            }
+        });
     </script>
     <script src="js/ar-scene.js"></script>
 </body>
