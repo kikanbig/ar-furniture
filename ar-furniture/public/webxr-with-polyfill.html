@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 WebXR + Polyfill Test</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill - добавляет поддержку WebXR если её нет -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .test-btn {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .status {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        
+        .success { color: #4CAF50; }
+        .error { color: #ff6b6b; }
+        .warning { color: #ffa726; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 WebXR Polyfill Test</h1>
+        <p>Проверяем работу WebXR с Polyfill</p>
+        
+        <div id="status" class="status">⏳ Загрузка...</div>
+        
+        <button id="test-btn" class="test-btn" style="display: none;">
+            🚀 ТЕСТ WebXR + Polyfill
+        </button>
+        
+        <div id="log" class="log">
+            📝 Инициализация...<br>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        const testBtn = document.getElementById('test-btn');
+        
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'normal') {
+            status.innerHTML = message;
+            status.className = 'status ' + type;
+        }
+        
+        // Инициализация WebXR Polyfill
+        addLog('🔧 Инициализация WebXR Polyfill...');
+        
+        // Проверка после загрузки polyfill
+        window.addEventListener('load', async function() {
+            addLog('📱 User Agent: ' + navigator.userAgent);
+            addLog('🌐 URL: ' + window.location.href);
+            addLog('🔒 HTTPS: ' + (location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'));
+            
+            // Проверка WebXR до polyfill
+            addLog('📋 Проверка WebXR API:');
+            
+            if (window.WebXRPolyfill) {
+                addLog('✅ WebXR Polyfill загружен');
+                
+                // Инициализируем polyfill
+                const polyfill = new WebXRPolyfill();
+                addLog('🔧 WebXR Polyfill инициализирован');
+                
+                // Проверяем что теперь доступно
+                if (navigator.xr) {
+                    addLog('✅ navigator.xr теперь доступен!');
+                    updateStatus('🎉 WebXR доступен с Polyfill!', 'success');
+                    
+                    // Проверяем поддержку AR
+                    try {
+                        const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                        addLog('🤖 AR поддержка: ' + (arSupported ? '✅ Да' : '❌ Нет'));
+                        
+                        if (arSupported) {
+                            updateStatus('🚀 AR готов к работе!', 'success');
+                            testBtn.style.display = 'block';
+                        } else {
+                            updateStatus('⚠️ AR не поддерживается', 'warning');
+                            addLog('💡 Возможно нужно включить флаги WebXR в chrome://flags/');
+                        }
+                    } catch (error) {
+                        addLog('❌ Ошибка проверки AR: ' + error.message);
+                        updateStatus('❌ Ошибка проверки AR', 'error');
+                    }
+                    
+                } else {
+                    addLog('❌ navigator.xr всё ещё недоступен');
+                    updateStatus('❌ WebXR недоступен даже с Polyfill', 'error');
+                }
+                
+            } else {
+                addLog('❌ WebXR Polyfill не загрузился');
+                updateStatus('❌ Polyfill не загрузился', 'error');
+            }
+        });
+        
+        // Обработчик кнопки теста
+        testBtn.addEventListener('click', async function() {
+            addLog('🚀 Запуск тестовой AR сессии...');
+            
+            try {
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local'],
+                    optionalFeatures: ['hit-test']
+                });
+                
+                addLog('✅ AR сессия создана успешно!');
+                updateStatus('🎉 WebXR AR работает!', 'success');
+                
+                // Закрываем сессию через 3 секунды
+                setTimeout(() => {
+                    session.end();
+                    addLog('🔚 Тестовая сессия завершена');
+                }, 3000);
+                
+            } catch (error) {
+                addLog('❌ Ошибка создания AR сессии: ' + error.message);
+                updateStatus('❌ AR сессия не создана', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

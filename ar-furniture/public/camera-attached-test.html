@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📷 Camera Attached Test | Объекты привязаны к камере</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 2px solid #ff6b6b;
+            position: relative;
+            z-index: 9999;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>📷 Camera Attached Test</h1>
+    <p>Объекты привязаны к позиции камеры</p>
+    
+    <button id="start-btn" class="start-btn">
+        🚀 ЗАПУСТИТЬ CAMERA ATTACH TEST
+    </button>
+    
+    <div id="log" class="log">
+        📝 Camera Attached Test готов...<br>
+    </div>
+    
+    <div id="controls" class="controls hidden">
+        <button id="add-cube" class="btn">📦 ДОБАВИТЬ КУБ К КАМЕРЕ</button>
+        <button id="copy-log" class="btn">📋 СКОПИРОВАТЬ ЛОГ</button>
+        <button id="exit-btn" class="btn">❌ ВЫХОД</button>
+    </div>
+
+    <script>
+        let session = null;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let referenceSpace = null;
+        let objects = [];
+        let frameCount = 0;
+        
+        const log = document.getElementById('log');
+        const controls = document.getElementById('controls');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function startCameraAttachTest() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '🔄 Запуск Camera Attach Test...';
+            
+            try {
+                addLog('📷 === CAMERA ATTACHED TEST ===');
+                
+                // WebXR Polyfill
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    addLog('🔧 Активация WebXR Polyfill...');
+                    const polyfill = new WebXRPolyfill();
+                }
+                
+                if (!navigator.xr) {
+                    throw new Error('WebXR недоступен');
+                }
+                
+                addLog('✅ WebXR доступен');
+                
+                // AR поддержка
+                const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (!arSupported) {
+                    throw new Error('AR не поддерживается');
+                }
+                
+                addLog('✅ AR поддерживается');
+                
+                // Создание сессии с DOM Overlay
+                session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local'],
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.body }
+                });
+                
+                addLog('✅ AR сессия создана');
+                
+                // Reference space
+                referenceSpace = await session.requestReferenceSpace('local');
+                addLog('✅ Reference space получен');
+                
+                // WebGL 
+                await setupRenderer();
+                setupScene();
+                
+                // Запуск рендеринга
+                session.requestAnimationFrame(onXRFrame);
+                
+                // UI
+                startBtn.innerHTML = '✅ AR АКТИВЕН';
+                controls.classList.remove('hidden');
+                
+                setupControls();
+                
+                addLog('🎉 Camera Attached Test запущен!');
+                addLog('📷 Объекты будут привязаны к позиции камеры!');
+                
+            } catch (error) {
+                addLog('❌ ОШИБКА: ' + error.message);
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🚀 ЗАПУСТИТЬ CAMERA ATTACH TEST';
+            }
+        }
+
+        async function setupRenderer() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl', { xrCompatible: true });
+            
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                context: gl,
+                alpha: true,
+                antialias: true
+            });
+            
+            renderer.xr.enabled = true;
+            renderer.xr.setSession(session);
+            
+            await session.updateRenderState({
+                baseLayer: new XRWebGLLayer(session, gl)
+            });
+            
+            addLog('✅ WebGL рендерер настроен');
+        }
+
+        function setupScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera();
+            
+            // Очень яркое освещение
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            scene.add(ambientLight);
+            
+            addLog('✅ Сцена создана');
+        }
+
+        function addCubeToCamera() {
+            addLog('📦 === ДОБАВЛЕНИЕ КУБА К КАМЕРЕ ===');
+            
+            // Получаем текущую позицию камеры
+            const cameraGroup = renderer.xr.getCamera(camera);
+            
+            // Создаем ОГРОМНЫЙ яркий куб
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: Math.random() * 0xffffff,
+                transparent: false
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            
+            // ВАЖНО: Размещаем куб ОТНОСИТЕЛЬНО КАМЕРЫ
+            if (cameraGroup && cameraGroup.position) {
+                // Куб на 2 метра ПЕРЕД камерой
+                cube.position.copy(cameraGroup.position);
+                cube.position.z -= 2; // 2 метра вперед в локальной системе камеры
+                cube.position.y += Math.random() * 2 - 1; // Случайное смещение по высоте
+                cube.position.x += Math.random() * 2 - 1; // Случайное смещение по ширине
+                
+                addLog('📍 Куб размещен относительно камеры:');
+                addLog('   Camera: ' + cameraGroup.position.x.toFixed(2) + ', ' + cameraGroup.position.y.toFixed(2) + ', ' + cameraGroup.position.z.toFixed(2));
+                addLog('   Cube: ' + cube.position.x.toFixed(2) + ', ' + cube.position.y.toFixed(2) + ', ' + cube.position.z.toFixed(2));
+            } else {
+                // Fallback: размещаем в фиксированной позиции
+                cube.position.set(
+                    Math.random() * 4 - 2,  // -2 до +2
+                    Math.random() * 2 - 1,  // -1 до +1  
+                    -2 - Math.random() * 3  // -2 до -5
+                );
+                addLog('📍 Куб размещен в фиксированной позиции (fallback)');
+                addLog('   Cube: ' + cube.position.x.toFixed(2) + ', ' + cube.position.y.toFixed(2) + ', ' + cube.position.z.toFixed(2));
+            }
+            
+            scene.add(cube);
+            objects.push(cube);
+            
+            addLog('✅ Куб #' + objects.length + ' добавлен! Цвет: #' + material.color.getHexString());
+            addLog('📦 Всего объектов: ' + objects.length);
+        }
+
+        function onXRFrame(time, frame) {
+            session.requestAnimationFrame(onXRFrame);
+            frameCount++;
+            
+            // Каждые 60 кадров логируем
+            if (frameCount % 60 === 0) {
+                addLog('🔄 Frame ' + frameCount + ' - рендеринг...');
+                
+                // Информация о камере
+                const cameraGroup = renderer.xr.getCamera(camera);
+                if (cameraGroup && cameraGroup.position) {
+                    addLog('📷 Camera position: ' + 
+                           cameraGroup.position.x.toFixed(2) + ', ' + 
+                           cameraGroup.position.y.toFixed(2) + ', ' + 
+                           cameraGroup.position.z.toFixed(2));
+                }
+                
+                // Информация о рендерере
+                if (renderer && renderer.info) {
+                    const info = renderer.info;
+                    addLog('📊 Calls: ' + info.render.calls + ', Triangles: ' + info.render.triangles);
+                }
+                
+                addLog('📦 Объектов в сцене: ' + scene.children.length);
+            }
+            
+            // Анимация объектов
+            objects.forEach(function(obj, index) {
+                obj.rotation.y = time * 0.001 * (index + 1);
+                obj.rotation.x = time * 0.0005 * (index + 1);
+            });
+            
+            // РЕНДЕРИНГ
+            renderer.render(scene, camera);
+        }
+
+        function setupControls() {
+            // Автоматически добавляем первый куб
+            setTimeout(function() {
+                addCubeToCamera();
+                addLog('🎯 ПЕРВЫЙ КУБ ДОБАВЛЕН АВТОМАТИЧЕСКИ!');
+                addLog('🔍 Поворачивайте камеру и ищите вращающийся куб!');
+            }, 1000);
+
+            document.getElementById('add-cube').addEventListener('click', function() {
+                addCubeToCamera();
+            });
+
+            document.getElementById('copy-log').addEventListener('click', function() {
+                const logText = document.getElementById('log').innerText;
+                navigator.clipboard.writeText(logText).then(function() {
+                    addLog('📋 Лог скопирован в буфер обмена!');
+                }).catch(function() {
+                    addLog('❌ Ошибка копирования лога');
+                });
+            });
+
+            document.getElementById('exit-btn').addEventListener('click', function() {
+                session.end();
+            });
+
+            session.addEventListener('end', function() {
+                addLog('🔚 AR сессия завершена');
+                location.reload();
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startCameraAttachTest);
+            addLog('📷 Camera Attached Test готов к запуску');
+        });
+    </script>
+</body>
+</html>
