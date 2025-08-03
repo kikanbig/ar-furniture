@@ -343,6 +343,11 @@ app.get('/simple-chair', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'simple-chair-ar.html'));
 });
 
+// 🪑 РАБОЧЕЕ AR КРЕСЛО (копия webxr-polyfill архитектуры)
+app.get('/chair-working', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'chair-working.html'));
+});
+
 // Обработка ошибок
 app.use((err, req, res, next) => {
     console.error(err.stack);

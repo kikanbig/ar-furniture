@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🪑 Simple AR Chair | Без ES Modules</title>
+    <title>🪑 Working AR Chair | No ES Modules</title>
     <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
     
     <!-- WebXR Polyfill -->
     <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     
-    <!-- Three.js классические скрипты -->
+    <!-- Three.js обычные скрипты -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     
@@ -66,7 +66,7 @@
             box-shadow: 0 8px 20px rgba(139, 69, 19, 0.3);
         }
         
-        .log {
+        .debug-panel {
             background: rgba(0,0,0,0.8);
             color: white;
             padding: 15px;
@@ -77,8 +77,6 @@
             max-height: 200px;
             overflow-y: auto;
         }
-        
-        .hidden { display: none; }
         
         .controls {
             position: fixed;
@@ -100,23 +98,49 @@
             color: white;
             background: linear-gradient(45deg, #8B4513, #CD853F);
         }
+        
+        .hidden { display: none; }
+        
+        .features {
+            list-style: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .features li:before {
+            content: "🪑 ";
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
     <!-- Стартовый экран -->
     <div id="starting-screen" class="starting-screen">
         <div class="start-card">
-            <h1>🪑 Simple AR Chair</h1>
+            <h1>🪑 Working AR Chair</h1>
             <p style="margin: 10px 0 20px; opacity: 0.8;">
-                Простая версия без ES Modules
+                Рабочая версия без ES Modules
             </p>
             <button id="start-btn" class="start-btn">
-                🚀 ЗАПУСТИТЬ SIMPLE AR
+                🚀 ЗАПУСТИТЬ WORKING AR
             </button>
             
-            <div id="log" class="log">
-                📝 Загрузка Simple AR...<br>
+            <div id="debug-panel" class="debug-panel">
+                📝 Загрузка Working AR Chair...<br>
             </div>
+            
+            <ul class="features">
+                <li>Проверенная архитектура</li>
+                <li>WebXR Polyfill включен</li>
+                <li>Обычный JavaScript</li>
+                <li>Качественная 3D модель</li>
+            </ul>
         </div>
     </div>
 
@@ -127,7 +151,7 @@
         <button id="exit-btn" class="btn">❌ ВЫХОД</button>
     </div>
 
-    <!-- ОБЫЧНЫЙ JAVASCRIPT БЕЗ MODULES -->
+    <!-- РАБОЧИЙ JAVASCRIPT БЕЗ MODULES -->
     <script>
         // Глобальные переменные
         let session = null;
@@ -140,14 +164,14 @@
         let placedObjects = [];
         let chairTemplate = null;
         
-        const log = document.getElementById('log');
+        const debugPanel = document.getElementById('debug-panel');
         const startingScreen = document.getElementById('starting-screen');
         const controls = document.getElementById('controls');
 
-        function addLog(message) {
+        function log(message) {
             console.log(message);
-            log.innerHTML += message + '<br>';
-            log.scrollTop = log.scrollHeight;
+            debugPanel.innerHTML += message + '<br>';
+            debugPanel.scrollTop = debugPanel.scrollHeight;
         }
 
         // Проверка браузера
@@ -156,68 +180,85 @@
             const isTelegram = userAgent.includes('telegram');
             
             if (isTelegram) {
-                addLog('⚠️ Обнаружен Telegram браузер!');
-                addLog('💡 Лучше открыть в Chrome');
+                log('⚠️ Обнаружен Telegram браузер!');
+                log('💡 Для лучшей работы откройте в Chrome');
             }
             
-            addLog('📱 User Agent: ' + navigator.userAgent);
-            addLog('🔒 HTTPS: ' + (location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'));
+            log('📱 User Agent: ' + navigator.userAgent.substring(0, 60) + '...');
+            log('🔒 HTTPS: ' + (location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'));
+            log('🌐 URL: ' + window.location.href);
         }
 
         // Инициализация AR
-        async function startAR() {
+        async function initializeAR() {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true;
-            startBtn.innerHTML = '🔄 Запуск...';
+            startBtn.innerHTML = '🔄 Инициализация...';
             
             try {
-                addLog('🔧 Инициализация WebXR Polyfill...');
+                log('🔧 Проверка WebXR Polyfill...');
                 
-                // Polyfill если нужен
-                if (window.WebXRPolyfill && !navigator.xr) {
-                    const polyfill = new WebXRPolyfill();
-                    addLog('✅ WebXR Polyfill активирован');
+                // Polyfill инициализация
+                if (window.WebXRPolyfill) {
+                    if (!navigator.xr) {
+                        log('🔧 Активация WebXR Polyfill...');
+                        const polyfill = new WebXRPolyfill();
+                        log('✅ WebXR Polyfill активирован');
+                    } else {
+                        log('✅ WebXR уже доступен нативно');
+                    }
+                } else {
+                    log('⚠️ WebXR Polyfill не загрузился');
                 }
                 
                 if (!navigator.xr) {
-                    throw new Error('WebXR недоступен');
+                    throw new Error('WebXR недоступен даже с polyfill');
                 }
                 
-                addLog('✅ WebXR найден');
+                log('✅ WebXR API доступен');
                 
                 const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
                 if (!arSupported) {
-                    throw new Error('AR не поддерживается');
+                    throw new Error('AR режим не поддерживается');
                 }
                 
-                addLog('✅ AR поддерживается');
+                log('✅ AR режим поддерживается');
                 
-                // Запрос сессии
+                // Запрос AR сессии
                 session = await navigator.xr.requestSession('immersive-ar', {
                     requiredFeatures: ['local', 'hit-test']
                 });
                 
-                addLog('✅ AR сессия создана');
+                log('✅ AR сессия создана');
                 
                 // Переключение интерфейса
                 startingScreen.classList.add('hidden');
                 controls.classList.remove('hidden');
                 
-                // Инициализация рендерера
+                // Инициализация WebGL
                 await initRenderer();
                 createScene();
                 await loadChair();
                 await setupHitTest();
                 
+                // Запуск рендер лупа
                 session.requestAnimationFrame(onXRFrame);
                 setupControls();
                 
-                addLog('🎉 AR готов!');
+                log('🎉 AR готов к использованию!');
+                log('📍 Двигайте устройство для поиска поверхностей');
                 
             } catch (error) {
-                addLog('❌ Ошибка: ' + error.message);
+                log('❌ ОШИБКА: ' + error.message);
                 startBtn.disabled = false;
-                startBtn.innerHTML = '🚀 ЗАПУСТИТЬ SIMPLE AR';
+                startBtn.innerHTML = '🚀 ЗАПУСТИТЬ WORKING AR';
+                
+                if (error.message.includes('не поддерживается')) {
+                    log('💡 Попробуйте:');
+                    log('• Включить WebXR флаги в chrome://flags/');
+                    log('• Установить Google ARCore');
+                    log('• Использовать Chrome браузер');
+                }
             }
         }
 
@@ -237,27 +278,39 @@
             renderer.xr.enabled = true;
             renderer.xr.setSession(session);
             
+            // Тени
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
             await session.updateRenderState({
                 baseLayer: new XRWebGLLayer(session, gl)
             });
             
-            addLog('✅ Рендерер настроен');
+            log('✅ WebGL рендерер настроен');
         }
 
-        // Создание сцены
+        // Создание 3D сцены
         function createScene() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // Освещение
+            // Освещение для кресла
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
             
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
             directionalLight.position.set(2, 4, 3);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
             
-            // Reticle
+            // Боковое освещение
+            const sideLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            sideLight.position.set(-2, 2, 1);
+            scene.add(sideLight);
+            
+            // Reticle для размещения
             const reticleGeometry = new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2);
             const reticleMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0xCD853F,
@@ -269,7 +322,7 @@
             reticle.visible = false;
             scene.add(reticle);
             
-            addLog('✅ 3D сцена создана');
+            log('✅ 3D сцена создана');
         }
 
         // Загрузка кресла
@@ -277,19 +330,36 @@
             return new Promise((resolve, reject) => {
                 const loader = new THREE.GLTFLoader();
                 
-                addLog('🪑 Загрузка кресла...');
+                log('🪑 Загрузка качественного кресла...');
                 
                 loader.load(
                     '/models/chair-modern.glb',
-                    (gltf) => {
+                    function(gltf) {
                         chairTemplate = gltf.scene.clone();
                         chairTemplate.scale.set(0.5, 0.5, 0.5);
-                        addLog('✅ Кресло загружено!');
+                        
+                        // Настройка материалов
+                        chairTemplate.traverse(function(child) {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                if (child.material) {
+                                    child.material.envMapIntensity = 0.8;
+                                }
+                            }
+                        });
+                        
+                        log('✅ Качественное кресло загружено!');
                         resolve();
                     },
-                    undefined,
-                    (error) => {
-                        addLog('⚠️ Ошибка загрузки, создаем простое кресло');
+                    function(progress) {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        if (percent % 25 === 0) {
+                            log('🪑 Загрузка: ' + percent + '%');
+                        }
+                    },
+                    function(error) {
+                        log('⚠️ Ошибка загрузки GLB, создаем простое кресло');
                         createFallbackChair();
                         resolve();
                     }
@@ -297,7 +367,7 @@
             });
         }
 
-        // Простое кресло
+        // Простое кресло fallback
         function createFallbackChair() {
             const group = new THREE.Group();
             
@@ -306,6 +376,7 @@
             const seatMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
             const seat = new THREE.Mesh(seatGeometry, seatMaterial);
             seat.position.y = 0.4;
+            seat.castShadow = true;
             group.add(seat);
             
             // Спинка
@@ -313,10 +384,29 @@
             const backMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
             const back = new THREE.Mesh(backGeometry, backMaterial);
             back.position.set(0, 0.7, -0.25);
+            back.castShadow = true;
             group.add(back);
             
+            // Ножки
+            const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.4);
+            const legMaterial = new THREE.MeshPhongMaterial({ color: 0x2F2F2F });
+            
+            const legPositions = [
+                [-0.25, 0.2, -0.25],
+                [0.25, 0.2, -0.25],
+                [-0.25, 0.2, 0.25],
+                [0.25, 0.2, 0.25]
+            ];
+            
+            legPositions.forEach(function(pos) {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(pos[0], pos[1], pos[2]);
+                leg.castShadow = true;
+                group.add(leg);
+            });
+            
             chairTemplate = group;
-            addLog('🔧 Простое кресло создано');
+            log('🔧 Простое кресло создано');
         }
 
         // Hit testing
@@ -325,9 +415,9 @@
                 referenceSpace = await session.requestReferenceSpace('local');
                 const viewerSpace = await session.requestReferenceSpace('viewer');
                 hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-                addLog('✅ Hit test настроен');
+                log('✅ Hit test настроен');
             } catch (error) {
-                addLog('⚠️ Hit test недоступен');
+                log('⚠️ Hit test недоступен: ' + error.message);
             }
         }
 
@@ -356,58 +446,74 @@
         }
 
         // Размещение кресла
-        function placeChair(matrix = null) {
-            if (!chairTemplate) return;
+        function placeChair(matrix) {
+            if (!chairTemplate) {
+                log('⚠️ Кресло еще не загружено');
+                return;
+            }
             
             const chair = chairTemplate.clone();
             
             if (matrix && reticle.visible) {
                 chair.matrix.fromArray(matrix);
                 chair.matrixAutoUpdate = false;
-                addLog('🪑 Кресло размещено на поверхности');
+                log('🪑 Кресло размещено на поверхности');
             } else {
                 chair.position.set(0, -0.3, -1.5);
-                addLog('🪑 Кресло размещено перед камерой');
+                chair.matrixAutoUpdate = true;
+                log('🪑 Кресло размещено перед камерой');
             }
             
             scene.add(chair);
             placedObjects.push(chair);
+            
+            log('🪑 Размещено кресел: ' + placedObjects.length);
         }
 
-        // Контролы
+        // Настройка контролов
         function setupControls() {
-            // Касание экрана
-            session.addEventListener('select', (event) => {
+            // Касание экрана для размещения
+            session.addEventListener('select', function(event) {
                 if (reticle.visible) {
                     placeChair(reticle.matrix.elements);
                 }
             });
 
-            document.getElementById('place-btn').onclick = () => placeChair();
-            
-            document.getElementById('clear-btn').onclick = () => {
-                placedObjects.forEach(obj => scene.remove(obj));
+            // Кнопка принудительного размещения
+            document.getElementById('place-btn').addEventListener('click', function() {
+                placeChair();
+            });
+
+            // Очистка
+            document.getElementById('clear-btn').addEventListener('click', function() {
+                placedObjects.forEach(function(obj) {
+                    scene.remove(obj);
+                });
                 placedObjects = [];
-                addLog('🗑️ Кресла удалены');
-            };
+                log('🗑️ Все кресла удалены');
+            });
 
-            document.getElementById('exit-btn').onclick = () => session.end();
+            // Выход
+            document.getElementById('exit-btn').addEventListener('click', function() {
+                session.end();
+            });
 
-            session.addEventListener('end', () => {
+            // Завершение сессии
+            session.addEventListener('end', function() {
                 startingScreen.classList.remove('hidden');
                 controls.classList.add('hidden');
-                addLog('🔚 AR завершен');
+                log('🔚 AR сессия завершена');
             });
         }
 
-        // Инициализация
+        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             checkBrowser();
             
             const startBtn = document.getElementById('start-btn');
-            startBtn.addEventListener('click', startAR);
+            startBtn.addEventListener('click', initializeAR);
             
-            addLog('🔧 Simple AR готов к запуску');
+            log('🔧 Working AR Chair готов к запуску');
         });
     </script>
 </body>
