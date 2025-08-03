@@ -204,20 +204,25 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // ЯРКОЕ освещение для текстурированных материалов
-            const ambientLight = new THREE.AmbientLight(0xffffff, 3.0);
+            // МАКСИМАЛЬНО ЯРКОЕ освещение для видимости оригинальных материалов
+            const ambientLight = new THREE.AmbientLight(0xffffff, 10.0); // Очень яркий
             scene.add(ambientLight);
             
             // Направленный свет для лучшего освещения текстур
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0); // Очень яркий
             directionalLight.position.set(1, 1, 1);
             scene.add(directionalLight);
             
             // Дополнительный свет для деталей
-            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x666666, 2.0); // Очень яркий
             scene.add(hemisphereLight);
             
-            addLog('✅ Сцена готова с ярким освещением');
+            // Еще один направленный свет с другой стороны
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 3.0);
+            directionalLight2.position.set(-1, 1, -1);
+            scene.add(directionalLight2);
+            
+            addLog('✅ Сцена готова с МАКСИМАЛЬНО ярким освещением');
         }
 
         async function loadChair() {
@@ -232,33 +237,8 @@
                         chairTemplate = gltf.scene.clone();
                         chairTemplate.scale.set(0.3, 0.3, 0.3);
                         
-                        // СОХРАНЯЕМ ОРИГИНАЛЬНЫЕ МАТЕРИАЛЫ, но делаем их видимыми
-                        chairTemplate.traverse(function(child) {
-                            if (child.isMesh && child.material) {
-                                // Сохраняем оригинальный материал
-                                const originalMaterial = child.material;
-                                
-                                // Если это MeshStandardMaterial или MeshPhongMaterial, делаем его ярче
-                                if (originalMaterial.isMeshStandardMaterial || originalMaterial.isMeshPhongMaterial) {
-                                    // Увеличиваем яркость
-                                    originalMaterial.emissive = new THREE.Color(0x222222);
-                                    originalMaterial.emissiveIntensity = 0.2;
-                                    
-                                    // Увеличиваем интенсивность освещения
-                                    if (originalMaterial.metalness !== undefined) {
-                                        originalMaterial.metalness = 0.1; // Уменьшаем металличность
-                                    }
-                                    if (originalMaterial.roughness !== undefined) {
-                                        originalMaterial.roughness = 0.8; // Увеличиваем шероховатость
-                                    }
-                                }
-                                // Если это MeshBasicMaterial, добавляем emissive
-                                else if (originalMaterial.isMeshBasicMaterial) {
-                                    originalMaterial.emissive = new THREE.Color(0x222222);
-                                    originalMaterial.emissiveIntensity = 0.3;
-                                }
-                            }
-                        });
+                        // НЕ ТРОГАЕМ МАТЕРИАЛЫ ВООБЩЕ - оставляем как есть
+                        addLog('✅ Материалы кресла оставлены без изменений');
                         
                         addLog('✅ Кресло chair-modern.glb загружено!');
                         resolve();
