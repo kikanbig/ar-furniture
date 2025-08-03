@@ -96,7 +96,7 @@ app.get('/ar/:furnitureId', (req, res) => {
     if (furniture) {
         res.sendFile(path.join(__dirname, 'public', 'ar.html'));
     } else {
-        res.status(404).send('Мебель не найдена');
+        res.status(404).json({ error: 'Мебель не найдена' });
     }
 });
 
