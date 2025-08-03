@@ -101,6 +101,46 @@ app.get('/ar/:furnitureId', (req, res) => {
     }
 });
 
+// 🔥 ПРОФЕССИОНАЛЬНЫЙ WebXR AR для конкретной мебели
+app.get('/webxr/:furnitureId', (req, res) => {
+    const furniture = furnitureDatabase[req.params.furnitureId];
+    if (furniture) {
+        res.sendFile(path.join(__dirname, 'public', 'webxr-ar.html'));
+    } else {
+        res.status(404).json({ error: 'Мебель не найдена' });
+    }
+});
+
+// API для генерации WebXR QR-кодов
+app.get('/api/webxr-qr/:furnitureId', async (req, res) => {
+    try {
+        const furniture = furnitureDatabase[req.params.furnitureId];
+        if (!furniture) {
+            return res.status(404).json({ error: 'Мебель не найдена' });
+        }
+
+        const url = `${req.protocol}://${req.get('host')}/webxr/${req.params.furnitureId}`;
+        const qrCodeDataURL = await QRCode.toDataURL(url, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+
+        res.json({
+            furnitureId: req.params.furnitureId,
+            url: url,
+            qrCode: qrCodeDataURL,
+            type: 'WebXR'
+        });
+    } catch (error) {
+        console.error('Ошибка генерации WebXR QR-кода:', error);
+        res.status(500).json({ error: 'Ошибка генерации QR-кода' });
+    }
+});
+
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -109,6 +149,11 @@ app.get('/', (req, res) => {
 // Страница с QR-кодами
 app.get('/qr-codes', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'qr-codes.html'));
+});
+
+// Страница с WebXR QR-кодами
+app.get('/webxr-qr', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'webxr-qr.html'));
 });
 
 // Обработка ошибок
