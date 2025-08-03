@@ -140,10 +140,16 @@
             border-radius: 10px; 
             margin: 20px 0; 
             font-family: monospace; 
-            font-size: 12px; 
-            color: #666;
-            display: none;
-        "></div>
+            font-size: 14px; 
+            color: #333;
+            border: 2px solid #ddd;
+            max-height: 200px;
+            overflow-y: auto;
+            display: block;
+        ">
+            📱 Отладочная информация (видна на телефоне):<br>
+            Ожидание нажатия кнопки...
+        </div>
         
         <button onclick="location.reload()" style="
             background: #666; 
@@ -155,6 +161,17 @@
             font-size: 14px;
             margin: 10px;
         ">🔄 Обновить страницу</button>
+        
+        <button onclick="copyDebugInfo()" style="
+            background: #ff9800; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px;
+        ">📋 Скопировать отладку</button>
     </div>
     
     <style>
@@ -235,9 +252,8 @@
             const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
             
-            // Показать отладочную информацию
-            debugInfo.style.display = 'block';
-            debugInfo.innerHTML = 'Запуск AR... Проверяем браузер...';
+            // Очистить и показать отладочную информацию
+            debugInfo.innerHTML = '📱 Нажата кнопка ЗАПУСТИТЬ AR...<br>Проверяем браузер...';
             
             try {
                 // Изменить кнопку
@@ -347,6 +363,29 @@
             }
         }
         
+        // Функция копирования отладочной информации
+        function copyDebugInfo() {
+            const debugInfo = document.getElementById('debug-info');
+            const text = debugInfo.innerText || debugInfo.textContent;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Отладочная информация скопирована! Можете отправить ее разработчику.');
+                }).catch(() => {
+                    // Fallback для старых браузеров
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('Отладочная информация скопирована! Можете отправить ее разработчику.');
+                });
+            } else {
+                alert('Скопируйте текст из серого блока выше и отправьте разработчику.');
+            }
+        }
+        
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 AR приложение загружено');
@@ -355,10 +394,17 @@
             
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                Браузер: ${navigator.userAgent}<br>
-                URL: ${window.location.href}<br>
-                HTTPS: ${window.location.protocol === 'https:' ? 'Да' : 'Нет'}<br>
-                getUserMedia: ${navigator.mediaDevices ? 'Поддерживается' : 'НЕ поддерживается'}
+                📱 Отладочная информация (видна на телефоне):<br>
+                ==========================================<br>
+                🌐 URL: ${window.location.href}<br>
+                🔒 HTTPS: ${window.location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'}<br>
+                📱 User Agent: ${navigator.userAgent.substring(0, 100)}...<br>
+                🎥 getUserMedia: ${navigator.mediaDevices ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
+                🎮 WebXR: ${('xr' in navigator) ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
+                📺 Screen: ${screen.width}x${screen.height}<br>
+                🕒 Время: ${new Date().toLocaleString()}<br>
+                ==========================================<br>
+                Ожидание нажатия кнопки "ЗАПУСТИТЬ AR"...
             `;
         });
     </script>
