@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 Emergency Test - Тест кнопок</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            margin: 10px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+        
+        .test-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .log {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 ЭКСТРЕННЫЙ ТЕСТ КНОПОК</h1>
+    <p>Версия: <span id="version">EMERGENCY v1.0</span></p>
+    
+    <!-- ТЕСТ 1: Обычный onclick -->
+    <button class="test-btn" onclick="test1()">
+        📱 ТЕСТ 1: onclick Alert
+    </button>
+    
+    <!-- ТЕСТ 2: addEventListener -->
+    <button id="test2-btn" class="test-btn">
+        🎯 ТЕСТ 2: addEventListener Alert
+    </button>
+    
+    <!-- ТЕСТ 3: Простая камера -->
+    <button id="test3-btn" class="test-btn">
+        📷 ТЕСТ 3: Простая камера
+    </button>
+    
+    <!-- ТЕСТ 4: Камера с логированием -->
+    <button id="test4-btn" class="test-btn">
+        🔍 ТЕСТ 4: Камера + полная диагностика
+    </button>
+    
+    <div id="log" class="log">
+        📝 ЛОГ ТЕСТИРОВАНИЯ:<br>
+        ⏰ <span id="timestamp"></span><br>
+        🌐 URL: <span id="current-url"></span><br>
+        📱 User Agent: <span id="user-agent"></span><br>
+        🔒 HTTPS: <span id="https-status"></span><br>
+        ---<br>
+    </div>
+    
+    <video id="video" style="width: 100%; max-width: 400px; display: none; border-radius: 10px; margin-top: 20px;"></video>
+
+    <!-- ОБЫЧНЫЙ JAVASCRIPT БЕЗ MODULES -->
+    <script>
+        // Начальная информация
+        document.getElementById('timestamp').textContent = new Date().toLocaleString('ru-RU');
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('https-status').textContent = location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌';
+        
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // ТЕСТ 1: Обычный onclick
+        function test1() {
+            addLog('✅ ТЕСТ 1 РАБОТАЕТ: onclick функция вызвана!');
+            alert('🎉 ТЕСТ 1: onclick работает!');
+        }
+        
+        // ТЕСТ 2: addEventListener
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🔧 DOMContentLoaded: Настройка addEventListener...');
+            
+            const test2Btn = document.getElementById('test2-btn');
+            if (test2Btn) {
+                test2Btn.addEventListener('click', function() {
+                    addLog('✅ ТЕСТ 2 РАБОТАЕТ: addEventListener сработал!');
+                    alert('🎉 ТЕСТ 2: addEventListener работает!');
+                });
+                addLog('✅ Кнопка ТЕСТ 2 настроена');
+            } else {
+                addLog('❌ Кнопка ТЕСТ 2 НЕ НАЙДЕНА!');
+            }
+            
+            // ТЕСТ 3: Простая камера
+            const test3Btn = document.getElementById('test3-btn');
+            if (test3Btn) {
+                test3Btn.addEventListener('click', async function() {
+                    addLog('🎯 ТЕСТ 3: Запуск простой камеры...');
+                    
+                    try {
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            throw new Error('getUserMedia не поддерживается');
+                        }
+                        
+                        addLog('📱 getUserMedia найден, запрашиваем камеру...');
+                        
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { 
+                                facingMode: 'environment',
+                                width: { ideal: 1280 },
+                                height: { ideal: 720 }
+                            } 
+                        });
+                        
+                        addLog('✅ КАМЕРА ПОЛУЧЕНА! Показываем видео...');
+                        
+                        const video = document.getElementById('video');
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        video.play();
+                        
+                        addLog('🎉 УСПЕХ! Камера работает!');
+                        alert('🎉 ТЕСТ 3: Камера работает!');
+                        
+                    } catch (error) {
+                        addLog('❌ ОШИБКА КАМЕРЫ: ' + error.message);
+                        alert('❌ ТЕСТ 3 провален: ' + error.message);
+                    }
+                });
+                addLog('✅ Кнопка ТЕСТ 3 настроена');
+            }
+            
+            // ТЕСТ 4: Камера с полной диагностикой
+            const test4Btn = document.getElementById('test4-btn');
+            if (test4Btn) {
+                test4Btn.addEventListener('click', async function() {
+                    addLog('🔍 ТЕСТ 4: Полная диагностика...');
+                    
+                    // Проверка API
+                    addLog('📋 Проверка API поддержки:');
+                    addLog('  • navigator.mediaDevices: ' + (navigator.mediaDevices ? '✅' : '❌'));
+                    addLog('  • getUserMedia: ' + (navigator.mediaDevices?.getUserMedia ? '✅' : '❌'));
+                    addLog('  • navigator.xr: ' + (navigator.xr ? '✅' : '❌'));
+                    
+                    // Проверка разрешений
+                    if (navigator.permissions) {
+                        try {
+                            const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+                            addLog('📷 Разрешение камеры: ' + cameraPermission.state);
+                        } catch (e) {
+                            addLog('⚠️ Не удалось проверить разрешения: ' + e.message);
+                        }
+                    }
+                    
+                    // Попытка получить камеру
+                    try {
+                        addLog('🎬 Запрос камеры с подробностями...');
+                        
+                        const constraints = { 
+                            video: { 
+                                facingMode: 'environment',
+                                width: { ideal: 1280, min: 640 },
+                                height: { ideal: 720, min: 480 }
+                            } 
+                        };
+                        
+                        addLog('📋 Constraints: ' + JSON.stringify(constraints));
+                        
+                        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        
+                        addLog('✅ Stream получен!');
+                        addLog('📺 Video tracks: ' + stream.getVideoTracks().length);
+                        
+                        if (stream.getVideoTracks().length > 0) {
+                            const track = stream.getVideoTracks()[0];
+                            addLog('📱 Track label: ' + track.label);
+                            addLog('📱 Track settings: ' + JSON.stringify(track.getSettings()));
+                        }
+                        
+                        const video = document.getElementById('video');
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        
+                        video.onloadedmetadata = function() {
+                            addLog('📺 Video metadata loaded: ' + video.videoWidth + 'x' + video.videoHeight);
+                        };
+                        
+                        video.play();
+                        
+                        addLog('🎉 ТЕСТ 4 УСПЕШЕН!');
+                        alert('🎉 ТЕСТ 4: Камера работает с диагностикой!');
+                        
+                    } catch (error) {
+                        addLog('❌ ОШИБКА В ТЕСТЕ 4: ' + error.name + ' - ' + error.message);
+                        alert('❌ ТЕСТ 4 провален: ' + error.message);
+                    }
+                });
+                addLog('✅ Кнопка ТЕСТ 4 настроена');
+            }
+            
+            addLog('🔧 Все кнопки настроены! Готов к тестированию.');
+        });
+        
+        // Проверка загрузки
+        window.addEventListener('load', function() {
+            addLog('🌍 Страница полностью загружена');
+        });
+        
+        addLog('📝 JavaScript загружен и выполняется...');
+    </script>
+</body>
+</html>

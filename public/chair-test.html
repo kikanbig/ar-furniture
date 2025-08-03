@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪑 Тест AR Кресла | Качественная модель</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #CD853F 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .qr-container h3 {
+            color: #8B4513;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .qr-code {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+            border-radius: 10px;
+        }
+        
+        .qr-description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+        
+        .direct-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .direct-link {
+            background: linear-gradient(45deg, #8B4513, #CD853F);
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.3);
+        }
+        
+        .direct-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.4);
+        }
+        
+        .features {
+            list-style: none;
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .features li:before {
+            content: "🪑 ";
+            margin-right: 8px;
+        }
+        
+        .loading {
+            color: #8B4513;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪑 AR Кресло Modern</h1>
+        <p class="subtitle">Тестирование качественной 3D модели в дополненной реальности</p>
+        
+        <div class="qr-container" id="qr-container">
+            <h3>📱 Сканируйте QR-код</h3>
+            <div class="loading">Генерация QR-кода...</div>
+        </div>
+        
+        <div class="direct-links">
+            <a href="/chair" class="direct-link">🪑 Открыть AR Кресло</a>
+            <a href="/all-versions" class="direct-link">📋 Все версии</a>
+        </div>
+        
+        <ul class="features">
+            <li>Качественная 3D модель AR-Code-1683008719374.glb</li>
+            <li>Professional WebXR технология</li>
+            <li>Реальное размещение на поверхностях</li>
+            <li>Оптимизированное освещение для кресла</li>
+            <li>Точное позиционирование и тени</li>
+            <li>Специально настроенный интерфейс</li>
+        </ul>
+    </div>
+
+    <script>
+        // Загружаем QR-код для кресла
+        async function loadChairQR() {
+            try {
+                const response = await fetch('/api/chair-qr');
+                const qrData = await response.json();
+                
+                const qrContainer = document.getElementById('qr-container');
+                qrContainer.innerHTML = `
+                    <h3>📱 Сканируйте QR-код</h3>
+                    <img src="${qrData.qrCode}" alt="AR Chair QR" class="qr-code">
+                    <div class="qr-description">
+                        <strong>Тип:</strong> ${qrData.type}<br>
+                        <strong>URL:</strong> ${qrData.url}<br>
+                        <strong>Модель:</strong> chair-modern.glb
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Ошибка загрузки QR-кода:', error);
+                document.getElementById('qr-container').innerHTML = `
+                    <h3>❌ Ошибка генерации QR-кода</h3>
+                    <div class="qr-description">
+                        Попробуйте обновить страницу или использовать прямую ссылку ниже
+                    </div>
+                `;
+            }
+        }
+
+        // Загружаем QR-код при загрузке страницы
+        window.addEventListener('load', loadChairQR);
+    </script>
+</body>
+</html>
