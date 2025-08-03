@@ -180,22 +180,38 @@
             addLog('🔧 Настройка рендерера...');
             
             const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl', { xrCompatible: true });
+            const gl = canvas.getContext('webgl', { 
+                xrCompatible: true,
+                antialias: true,
+                alpha: true,
+                depth: true,
+                stencil: true
+            });
             
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
                 context: gl,
-                alpha: true
+                alpha: true,
+                antialias: true,
+                preserveDrawingBuffer: true
             });
+            
+            // ВАЖНЫЕ настройки для корректного отображения текстур
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
             renderer.xr.enabled = true;
             renderer.xr.setSession(session);
-            renderer.setPixelRatio(window.devicePixelRatio);
             
             const baseLayer = new XRWebGLLayer(session, gl);
             await session.updateRenderState({ baseLayer: baseLayer });
             
-            addLog('✅ Рендерер готов');
+            addLog('✅ Рендерер готов с правильными настройками для текстур');
         }
 
         function setupScene() {
@@ -204,25 +220,29 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // МАКСИМАЛЬНО ЯРКОЕ освещение для видимости оригинальных материалов
-            const ambientLight = new THREE.AmbientLight(0xffffff, 10.0); // Очень яркий
+            // ПРАВИЛЬНОЕ освещение для реалистичных материалов
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
             
-            // Направленный свет для лучшего освещения текстур
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 5.0); // Очень яркий
-            directionalLight.position.set(1, 1, 1);
+            // Основной направленный свет
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
             
-            // Дополнительный свет для деталей
-            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x666666, 2.0); // Очень яркий
-            scene.add(hemisphereLight);
+            // Заполняющий свет
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
             
-            // Еще один направленный свет с другой стороны
-            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 3.0);
-            directionalLight2.position.set(-1, 1, -1);
-            scene.add(directionalLight2);
+            // Верхний свет
+            const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            topLight.position.set(0, 10, 0);
+            scene.add(topLight);
             
-            addLog('✅ Сцена готова с МАКСИМАЛЬНО ярким освещением');
+            addLog('✅ Сцена готова с правильным освещением для текстур');
         }
 
         async function loadChair() {
