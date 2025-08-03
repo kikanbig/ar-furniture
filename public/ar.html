@@ -213,34 +213,140 @@
     </div>
     
     <script>
-        // ПРОСТАЯ AR ВЕРСИЯ - запускаем через событие A-Frame
-        function startAR() {
+        // ПОЛНАЯ ДИАГНОСТИКА И ПРЯМАЯ РАБОТА С КАМЕРОЙ
+        async function startAR() {
             const btn = document.getElementById('start-ar-btn');
             const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
             
-            // Изменить кнопку
-            btn.innerHTML = '⏳ ЗАПУСКАЕМ AR...';
-            btn.disabled = true;
-            btn.style.background = '#666';
+            // Показать отладчик на экране
+            debugInfo.style.display = 'block';
+            debugInfo.style.position = 'fixed';
+            debugInfo.style.top = '10px';
+            debugInfo.style.left = '10px';
+            debugInfo.style.width = 'calc(100% - 20px)';
+            debugInfo.style.zIndex = '10000';
+            debugInfo.style.fontSize = '11px';
+            debugInfo.style.maxHeight = '150px';
             
-            debugInfo.innerHTML = '🚀 Активируем AR камеру...';
-            
-            // Показать AR сцену СРАЗУ - AR.js сам запросит камеру
-            loading.style.display = 'none';
-            debugInfo.style.display = 'none';
-            
-            const arContainer = document.getElementById('ar-container');
-            arContainer.style.display = 'block';
-            
-            // Принудительно запустить AR.js
-            const scene = document.querySelector('a-scene');
-            if (scene && scene.systems && scene.systems.arjs) {
-                console.log('🎯 Принудительный запуск AR.js');
-                scene.systems.arjs.start();
+            function log(msg) {
+                const time = new Date().toLocaleTimeString();
+                debugInfo.innerHTML += `<br>[${time}] ${msg}`;
+                debugInfo.scrollTop = debugInfo.scrollHeight;
             }
             
-            console.log('✅ AR сцена показана!');
+            try {
+                btn.innerHTML = '⏳ ДИАГНОСТИКА...';
+                btn.disabled = true;
+                
+                log('🚀 Запуск диагностики AR системы');
+                log(`📱 Браузер: ${navigator.userAgent.substring(0, 40)}...`);
+                log(`🌐 URL: ${window.location.href}`);
+                
+                // Проверка базовых API
+                log('🔍 Проверяем WebRTC API...');
+                if (!navigator.mediaDevices) {
+                    throw new Error('MediaDevices API не поддерживается');
+                }
+                log('✅ MediaDevices API найден');
+                
+                if (!navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia не поддерживается');
+                }
+                log('✅ getUserMedia найден');
+                
+                // Проверка A-Frame
+                log('🔍 Проверяем A-Frame...');
+                if (typeof AFRAME === 'undefined') {
+                    throw new Error('A-Frame не загружен');
+                }
+                log(`✅ A-Frame версия: ${AFRAME.version}`);
+                
+                // Получение камеры
+                log('📷 Запрашиваем камеру...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+                
+                log(`✅ Камера получена! Треков: ${stream.getVideoTracks().length}`);
+                const track = stream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                log(`📊 Разрешение: ${settings.width}x${settings.height}`);
+                
+                // Создаем видео элемент напрямую
+                log('🎥 Создаем видео элемент...');
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.style.position = 'fixed';
+                video.style.top = '0';
+                video.style.left = '0';
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                video.style.zIndex = '1';
+                
+                // Добавляем на страницу
+                document.body.appendChild(video);
+                loading.style.display = 'none';
+                
+                video.addEventListener('loadedmetadata', () => {
+                    log('✅ Видео метаданные загружены');
+                    log(`📹 Размер видео: ${video.videoWidth}x${video.videoHeight}`);
+                });
+                
+                video.addEventListener('playing', () => {
+                    log('🎬 Видео воспроизводится!');
+                    log('🎯 КАМЕРА РАБОТАЕТ! Это базовая версия без AR маркеров');
+                    
+                    // Добавляем кнопку закрытия
+                    const closeBtn = document.createElement('button');
+                    closeBtn.innerHTML = '❌ ЗАКРЫТЬ КАМЕРУ';
+                    closeBtn.style.position = 'fixed';
+                    closeBtn.style.bottom = '20px';
+                    closeBtn.style.left = '50%';
+                    closeBtn.style.transform = 'translateX(-50%)';
+                    closeBtn.style.zIndex = '10001';
+                    closeBtn.style.padding = '15px 30px';
+                    closeBtn.style.background = '#ff4444';
+                    closeBtn.style.color = 'white';
+                    closeBtn.style.border = 'none';
+                    closeBtn.style.borderRadius = '25px';
+                    closeBtn.style.fontSize = '16px';
+                    closeBtn.style.fontWeight = 'bold';
+                    
+                    closeBtn.onclick = () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        document.body.removeChild(video);
+                        document.body.removeChild(closeBtn);
+                        debugInfo.style.display = 'none';
+                        btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
+                        btn.disabled = false;
+                        btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
+                    };
+                    
+                    document.body.appendChild(closeBtn);
+                });
+                
+                log('✅ ТЕСТ ЗАВЕРШЕН! Видео должно запуститься...');
+                
+            } catch (error) {
+                log(`❌ ОШИБКА: ${error.message}`);
+                log(`🔍 Тип: ${error.name}`);
+                if (error.stack) {
+                    log(`📞 Стек: ${error.stack.substring(0, 100)}...`);
+                }
+                
+                btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
+                btn.disabled = false;
+                btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
+            }
         }
         
         // Функция копирования отладочной информации
