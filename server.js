@@ -328,6 +328,11 @@ app.get('/chair-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chair-test.html'));
 });
 
+// 🚨 ЭКСТРЕННЫЙ ТЕСТ
+app.get('/emergency-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'emergency-test.html'));
+});
+
 // Обработка ошибок
 app.use((err, req, res, next) => {
     console.error(err.stack);
