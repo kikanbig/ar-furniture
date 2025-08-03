@@ -156,6 +156,18 @@
             Ожидание нажатия кнопки...
         </div>
         
+        <button onclick="alert('КНОПКА РАБОТАЕТ! JavaScript включен!')" style="
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 25px; 
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+        ">⚡ ТЕСТ ALERT</button>
+        
         <button onclick="location.reload()" style="
             background: #666; 
             color: white; 
@@ -348,7 +360,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                📱 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ - ВЕРСИЯ 2.0:<br>
+                📱 ОТЛАДОЧНАЯ ИНФОРМАЦИЯ - ВЕРСИЯ 3.0 INLINE:<br>
                 ==========================================<br>
                 🌐 URL: ${window.location.href}<br>
                 🔒 HTTPS: ${window.location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'}<br>
@@ -356,9 +368,11 @@
                 🎥 getUserMedia: ${navigator.mediaDevices ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
                 📺 Screen: ${screen.width}x${screen.height}<br>
                 🕒 Время: ${new Date().toLocaleString()}<br>
-                📱 Кнопка: 📷 ТЕСТ КНОПКИ (Версия 2.0)<br>
+                📱 Кнопка: 📷 ТЕСТ КНОПКИ (Версия 3.0 INLINE)<br>
+                🔧 onclick: ПРЯМО В HTML (inline)<br>
                 ==========================================<br>
-                ✋ Нажмите кнопку "📷 ТЕСТ КНОПКИ" для проверки
+                ✋ Нажмите кнопку "📷 ТЕСТ КНОПКИ" для проверки<br>
+                ❗ Если кнопка не работает - значит JavaScript заблокирован
             `;
         });
     </script>
