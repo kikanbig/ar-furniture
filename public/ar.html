@@ -233,6 +233,16 @@
                     <div id="ar-progress" style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 10px; margin: 20px 0;">
                         <div style="background: white; height: 100%; border-radius: 10px; width: 0%; transition: width 1s;" id="progress-bar"></div>
                     </div>
+                    <button onclick="skipToCamera()" style="
+                        background: rgba(255,255,255,0.2); 
+                        color: white; 
+                        border: 2px solid white; 
+                        padding: 10px 20px; 
+                        border-radius: 15px; 
+                        cursor: pointer;
+                        font-size: 14px;
+                        margin-top: 15px;
+                    ">⚡ ПРОПУСТИТЬ → ПРОСТАЯ КАМЕРА</button>
                 </div>
             `;
             
@@ -256,15 +266,13 @@
                 }
             }, 500);
             
-            // Таймаут - если AR.js не загрузился за 45 секунд
+            // Быстрый таймаут - если AR.js не загрузился за 10 секунд
             setTimeout(() => {
-                if (loading.style.display !== 'none') {
-                    console.log('⏰ Таймаут AR.js - переключаемся на диагностику');
-                    clearInterval(progressTimer);
-                    arContainer.style.display = 'none';
-                    startDiagnosticMode();
-                }
-            }, 45000);
+                console.log('⏰ Быстрый переход на диагностику - AR.js слишком медленный');
+                clearInterval(progressTimer);
+                arContainer.style.display = 'none';
+                startDiagnosticMode();
+            }, 10000);
             
             // Проверка успешной загрузки AR
             const scene = document.querySelector('a-scene');
@@ -292,6 +300,14 @@
                     }, 5000);
                 });
             }
+        }
+        
+        // Функция для принудительного пропуска AR.js
+        function skipToCamera() {
+            console.log('👆 Пользователь пропустил AR.js');
+            const arContainer = document.getElementById('ar-container');
+            arContainer.style.display = 'none';
+            startDiagnosticMode();
         }
         
         // Диагностический режим если AR.js не сработал
