@@ -35,13 +35,17 @@
         }
         
         .log {
-            background: rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.8);
+            color: white;
             padding: 15px;
             border-radius: 10px;
             font-size: 12px;
             max-height: 300px;
             overflow-y: auto;
             margin: 10px 0;
+            border: 2px solid #ff6b6b;
+            position: relative;
+            z-index: 9999;
         }
         
         .hidden { display: none; }
@@ -53,6 +57,7 @@
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
+            z-index: 9999;
         }
         
         .btn {
@@ -81,6 +86,7 @@
     <div id="controls" class="controls hidden">
         <button id="add-cube" class="btn">📦 ДОБАВИТЬ КУБ</button>
         <button id="render-info" class="btn">📊 RENDER INFO</button>
+        <button id="copy-log" class="btn">📋 СКОПИРОВАТЬ ЛОГ</button>
         <button id="exit-btn" class="btn">❌ ВЫХОД</button>
     </div>
 
@@ -130,9 +136,11 @@
                 
                 addLog('✅ AR поддерживается');
                 
-                // Создание сессии
+                // Создание сессии с DOM Overlay
                 session = await navigator.xr.requestSession('immersive-ar', {
-                    requiredFeatures: ['local']
+                    requiredFeatures: ['local'],
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.body }
                 });
                 
                 addLog('✅ AR сессия создана');
@@ -151,8 +159,8 @@
                 // Запуск рендеринга
                 session.requestAnimationFrame(onXRFrame);
                 
-                // UI
-                document.getElementById('start-btn').style.display = 'none';
+                // UI - НЕ СКРЫВАЕМ НИЧЕГО в AR режиме!
+                document.getElementById('start-btn').innerHTML = '✅ AR АКТИВЕН';
                 controls.classList.remove('hidden');
                 
                 setupControls();
@@ -350,6 +358,15 @@
                     addLog('🖼️ Textures: ' + info.memory.textures);
                 }
                 addLog('🎯 ДОЛЖНЫ БЫТЬ ВИДНЫ: красный куб, зеленая сфера, синий цилиндр');
+            });
+
+            document.getElementById('copy-log').addEventListener('click', function() {
+                const logText = document.getElementById('log').innerText;
+                navigator.clipboard.writeText(logText).then(function() {
+                    addLog('📋 Лог скопирован в буфер обмена!');
+                }).catch(function() {
+                    addLog('❌ Ошибка копирования лога');
+                });
             });
 
             document.getElementById('exit-btn').addEventListener('click', function() {
