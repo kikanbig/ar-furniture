@@ -177,11 +177,19 @@
         </div>
         
         <div class="qr-grid">
+            <!-- 🪑 Simple Chair - МАКСИМАЛЬНО ПРОСТАЯ ВЕРСИЯ -->
+            <div class="qr-card new" style="order: 1; border: 3px solid #ff6b6b;">
+                <h3>🪑 Simple Chair</h3>
+                <p><strong>🎯 ТОЛЬКО ОДИН БОЛЬШОЙ КУБ!</strong><br>
+                Максимально простая версия для диагностики</p>
+                <div id="qr-simple-chair" class="qr-code"></div>
+                <a href="ar-simple-chair.html" class="link">ar-simple-chair.html</a>
+            </div>
+            
             <!-- 🪑 Chair Clean - ЧИСТОЕ КРЕСЛО -->
-            <div class="qr-card new" style="order: 1; border: 3px solid #8B4513;">
+            <div class="qr-card" style="order: 2; border: 2px solid #8B4513;">
                 <h3>🪑 Chair Clean</h3>
-                <p><strong>🎯 ТОЛЬКО КРАСИВОЕ КРЕСЛО!</strong><br>
-                chair-modern.glb без цветных кубов и анимации</p>
+                <p>chair-modern.glb без цветных кубов и анимации</p>
                 <div id="qr-chair-clean" class="qr-code"></div>
                 <a href="ar-chair-clean.html" class="link">ar-chair-clean.html</a>
             </div>
@@ -257,6 +265,11 @@
         
         // Конфигурация страниц для QR-кодов
         const pages = [
+            {
+                id: 'qr-simple-chair',
+                url: baseURL + '/ar-simple-chair.html',
+                name: 'Simple Chair'
+            },
             {
                 id: 'qr-chair-clean',
                 url: baseURL + '/ar-chair-clean.html',
