@@ -21,9 +21,9 @@
     <!-- WebXR Polyfill -->
     <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     
-    <!-- AR.js - загружаем после получения камеры -->
-    <!-- <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script> -->
+    <!-- A-Frame и AR.js -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js"></script>
     
     <style>
         body {
@@ -199,10 +199,10 @@
             <a-marker preset="hiro">
                 <a-entity
                     id="furniture-model"
-                    position="0 0 0"
-                    scale="1 1 1"
+                    position="0 0.5 0"
+                    scale="0.5 0.5 0.5"
                     rotation="0 0 0"
-                    gltf-model=""
+                    gltf-model="/models/cannoli-sofa.glb"
                     animation-mixer>
                 </a-entity>
             </a-marker>
@@ -213,80 +213,39 @@
     </div>
     
     <script>
-        // ФИНАЛЬНАЯ AR ВЕРСИЯ - Всё работает!
+        // ПРОСТАЯ AR ВЕРСИЯ - без лишних усложнений
         async function startAR() {
             const btn = document.getElementById('start-ar-btn');
             const loading = document.getElementById('loading');
             const debugInfo = document.getElementById('debug-info');
             
-            debugInfo.innerHTML = `
-                🚀 ЗАПУСК AR СИСТЕМЫ!<br>
-                ==========================================<br>
-                📱 Время: ${new Date().toLocaleString()}<br>
-                🔧 Запрос камеры...
-            `;
-            
             try {
                 // Изменить кнопку
-                btn.innerHTML = '⏳ ЗАПРАШИВАЕМ КАМЕРУ...';
+                btn.innerHTML = '⏳ ЗАПУСКАЕМ AR...';
                 btn.disabled = true;
                 btn.style.background = '#666';
                 
-                debugInfo.innerHTML += '<br>📷 Проверяем поддержку камеры...';
+                debugInfo.innerHTML = '🚀 Запрос камеры...';
                 
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Камера не поддерживается вашим браузером');
-                }
-                
-                debugInfo.innerHTML += '<br>✅ Камера поддерживается!';
-                debugInfo.innerHTML += '<br>🔓 Запрашиваем разрешение...';
-                
-                // Запросить камеру
+                // Простой запрос камеры
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { 
-                        facingMode: 'environment' // Задняя камера на мобильных
-                    },
+                    video: { facingMode: 'environment' },
                     audio: false
                 });
                 
-                debugInfo.innerHTML += '<br>🎉 КАМЕРА АКТИВИРОВАНА!';
-                debugInfo.innerHTML += '<br>📊 Треков видео: ' + stream.getVideoTracks().length;
+                debugInfo.innerHTML = '✅ Камера получена! Запускаем AR...';
                 
-                // Остановить поток (AR.js возьмет управление)
+                // Остановить поток - AR.js сам подключится к камере
                 stream.getTracks().forEach(track => track.stop());
-                debugInfo.innerHTML += '<br>⚡ Передаем управление AR.js...';
                 
-                // Показать AR загрузку
-                loading.innerHTML = `
-                    <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px;">
-                        <h2 style="margin: 0 0 20px 0;">🎯 AR АКТИВИРУЕТСЯ!</h2>
-                        <div style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-                        <p style="font-size: 18px; margin: 20px 0;">Загружаем дополненную реальность...</p>
-                        <p style="font-size: 14px; opacity: 0.8;">Наведите камеру на маркер для отображения мебели</p>
-                    </div>
-                `;
+                // Показать AR сцену СРАЗУ
+                loading.style.display = 'none';
+                debugInfo.style.display = 'none';
                 
-                debugInfo.innerHTML += '<br>🎮 AR сцена готовится к запуску...';
+                const arContainer = document.getElementById('ar-container');
+                arContainer.style.display = 'block';
                 
-                // Скрыть загрузку и показать AR сцену
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                    debugInfo.style.display = 'none'; // Скрыть отладку
-                    
-                    // Показать A-Frame сцену
-                    const arContainer = document.getElementById('ar-container');
-                    if (arContainer) {
-                        arContainer.style.display = 'block';
-                        arContainer.style.position = 'fixed';
-                        arContainer.style.top = '0';
-                        arContainer.style.left = '0';
-                        arContainer.style.width = '100%';
-                        arContainer.style.height = '100%';
-                        arContainer.style.zIndex = '9999';
-                    }
-                    
-                    console.log('✅ AR сцена активирована!');
-                }, 3000);
+                console.log('✅ AR активирован!');
                 
             } catch (error) {
                 console.error('Ошибка AR:', error);
