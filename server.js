@@ -121,6 +121,16 @@ app.get('/webxr-v2/:furnitureId', (req, res) => {
     }
 });
 
+// 🏢 PROFESSIONAL WebXR AR (лучшие практики)
+app.get('/pro/:furnitureId', (req, res) => {
+    const furniture = furnitureDatabase[req.params.furnitureId];
+    if (furniture) {
+        res.sendFile(path.join(__dirname, 'public', 'webxr-professional.html'));
+    } else {
+        res.status(404).json({ error: 'Мебель не найдена' });
+    }
+});
+
 // API для генерации WebXR QR-кодов
 app.get('/api/webxr-qr/:furnitureId', async (req, res) => {
     try {
@@ -181,6 +191,36 @@ app.get('/api/webxr-v2-qr/:furnitureId', async (req, res) => {
     }
 });
 
+// API для генерации Professional WebXR QR-кодов
+app.get('/api/pro-qr/:furnitureId', async (req, res) => {
+    try {
+        const furniture = furnitureDatabase[req.params.furnitureId];
+        if (!furniture) {
+            return res.status(404).json({ error: 'Мебель не найдена' });
+        }
+
+        const url = `${req.protocol}://${req.get('host')}/pro/${req.params.furnitureId}`;
+        const qrCodeDataURL = await QRCode.toDataURL(url, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#2196F3',
+                light: '#FFFFFF'
+            }
+        });
+
+        res.json({
+            furnitureId: req.params.furnitureId,
+            url: url,
+            qrCode: qrCodeDataURL,
+            type: 'Professional WebXR'
+        });
+    } catch (error) {
+        console.error('Ошибка генерации Professional QR-кода:', error);
+        res.status(500).json({ error: 'Ошибка генерации QR-кода' });
+    }
+});
+
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -199,6 +239,11 @@ app.get('/webxr-qr', (req, res) => {
 // Страница с исправленными QR-кодами
 app.get('/fixed-qr', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'fixed-qr.html'));
+});
+
+// Страница со всеми версиями
+app.get('/all-versions', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'all-versions.html'));
 });
 
 // Обработка ошибок
