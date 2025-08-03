@@ -140,55 +140,31 @@
         </button>
         
         <div id="debug-info" style="
-            background: #f5f5f5; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin: 20px 0; 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
             font-family: monospace; 
-            font-size: 14px; 
-            color: #333;
-            border: 2px solid #ddd;
-            max-height: 200px;
+            font-size: 12px; 
+            color: #666;
+            border: 1px solid #dee2e6;
+            max-height: 150px;
             overflow-y: auto;
             display: block;
         ">
-            📱 Отладочная информация (видна на телефоне):<br>
-            Ожидание нажатия кнопки...
+            🎯 AR готов к запуску...
         </div>
         
-        <button onclick="alert('КНОПКА РАБОТАЕТ! JavaScript включен!')" style="
-            background: #4CAF50; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 25px; 
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 10px;
-        ">⚡ ТЕСТ ALERT</button>
-        
         <button onclick="location.reload()" style="
-            background: #666; 
+            background: #6c757d; 
             color: white; 
             border: none; 
-            padding: 10px 20px; 
-            border-radius: 20px; 
+            padding: 8px 16px; 
+            border-radius: 15px; 
             cursor: pointer;
-            font-size: 14px;
-            margin: 10px;
-        ">🔄 Обновить страницу</button>
-        
-        <button onclick="copyDebugInfo()" style="
-            background: #ff9800; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 20px; 
-            cursor: pointer;
-            font-size: 14px;
-            margin: 10px;
-        ">📋 Скопировать отладку</button>
+            font-size: 12px;
+            margin: 5px;
+        ">🔄 Обновить</button>
     </div>
     
     <style>
@@ -212,15 +188,12 @@
         <button class="control-btn" onclick="toggleInfo()">Информация</button>
     </div>
     
-    <div id="ar-container">
+    <div id="ar-container" style="display: none;">
         <a-scene
             vr-mode-ui="enabled: false"
             arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
             renderer="logarithmicDepthBuffer: true;"
-            embedded
-            arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
-            camera-init=""
-            camera-error="">
+            embedded>
             
             <!-- AR маркер для размещения мебели -->
             <a-marker preset="hiro">
@@ -295,10 +268,24 @@
                 
                 debugInfo.innerHTML += '<br>🎮 AR сцена готовится к запуску...';
                 
-                // Скрыть загрузку через 3 секунды и активировать AR
+                // Скрыть загрузку и показать AR сцену
                 setTimeout(() => {
                     loading.style.display = 'none';
-                    debugInfo.innerHTML += '<br>✅ AR ЗАПУЩЕН! Ищите маркер камерой.';
+                    debugInfo.style.display = 'none'; // Скрыть отладку
+                    
+                    // Показать A-Frame сцену
+                    const arContainer = document.getElementById('ar-container');
+                    if (arContainer) {
+                        arContainer.style.display = 'block';
+                        arContainer.style.position = 'fixed';
+                        arContainer.style.top = '0';
+                        arContainer.style.left = '0';
+                        arContainer.style.width = '100%';
+                        arContainer.style.height = '100%';
+                        arContainer.style.zIndex = '9999';
+                    }
+                    
+                    console.log('✅ AR сцена активирована!');
                 }, 3000);
                 
             } catch (error) {
@@ -394,18 +381,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const debugInfo = document.getElementById('debug-info');
             debugInfo.innerHTML = `
-                🎯 AR МЕБЕЛЬ - ГОТОВ К ЗАПУСКУ!<br>
-                ==========================================<br>
-                🌐 URL: ${window.location.href}<br>
-                🔒 HTTPS: ${window.location.protocol === 'https:' ? 'Да ✅' : 'Нет ❌'}<br>
-                📱 User Agent: ${navigator.userAgent.substring(0, 50)}...<br>
-                🎥 getUserMedia: ${navigator.mediaDevices ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
-                🎮 WebXR: ${('xr' in navigator) ? 'Поддерживается ✅' : 'НЕ поддерживается ❌'}<br>
-                📺 Screen: ${screen.width}x${screen.height}<br>
-                🕒 Время: ${new Date().toLocaleString()}<br>
-                ==========================================<br>
-                🚀 Нажмите "📷 ЗАПУСТИТЬ AR" для активации дополненной реальности!<br>
-                💡 После запуска наведите камеру на маркер для отображения мебели.
+                🎯 AR Мебель готов к запуску<br>
+                📱 Экран: ${screen.width}x${screen.height} | 🎥 Камера: ${navigator.mediaDevices ? '✅' : '❌'}<br>
+                🚀 Нажмите "ЗАПУСТИТЬ AR" ниже
             `;
         });
     </script>
