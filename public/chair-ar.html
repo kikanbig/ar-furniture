@@ -321,10 +321,46 @@
             }
         }
 
+        // Проверка браузера
+        function checkBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isTelegram = userAgent.includes('telegram');
+            const isWhatsApp = userAgent.includes('whatsapp');
+            const isViber = userAgent.includes('viber');
+            const isInApp = isTelegram || isWhatsApp || isViber;
+            
+            if (isInApp) {
+                const browserName = isTelegram ? 'Telegram' : isWhatsApp ? 'WhatsApp' : 'Viber';
+                log(`⚠️ Обнаружен браузер ${browserName}!`);
+                log('💡 Для AR нужен Chrome/Safari');
+                
+                // Показываем предупреждение
+                const warning = document.createElement('div');
+                warning.style.cssText = `
+                    position: fixed; top: 10px; left: 10px; right: 10px; z-index: 9999;
+                    background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+                    color: white; padding: 15px; border-radius: 10px;
+                    text-align: center; font-size: 14px; font-weight: bold;
+                `;
+                warning.innerHTML = `
+                    ⚠️ ${browserName} браузер не поддерживает AR<br>
+                    📱 Откройте ссылку в Chrome для работы AR
+                `;
+                document.body.appendChild(warning);
+                
+                return false;
+            }
+            
+            return true;
+        }
+
         // Привязка событий
         document.addEventListener('DOMContentLoaded', () => {
             const startBtn = document.getElementById('start-btn');
             startBtn.addEventListener('click', initializeAR);
+            
+            // Проверяем браузер
+            checkBrowser();
         });
 
         // Инициализация рендерера
