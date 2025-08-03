@@ -268,12 +268,8 @@
             renderer.xr.setSession(session);
             
             // Включаем тени для красоты
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            
-            // Тон мэппинг для реалистичности
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
+            // Отключаем тени для простоты (как в Debug Spaces)
+            renderer.shadowMap.enabled = false;
             
             const baseLayer = new XRWebGLLayer(session, gl);
             await session.updateRenderState({ baseLayer: baseLayer });
@@ -283,35 +279,13 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // КАЧЕСТВЕННОЕ ОСВЕЩЕНИЕ для красивого кресла
-            
-            // 1. Мягкое окружающее освещение
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // МАКСИМАЛЬНОЕ ОСВЕЩЕНИЕ (как в Debug Spaces)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 5.0);
             scene.add(ambientLight);
             
-            // 2. Основной направленный свет (имитация солнца)
-            const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-            mainLight.position.set(5, 10, 5);
-            mainLight.castShadow = true;
-            mainLight.shadow.mapSize.width = 2048;
-            mainLight.shadow.mapSize.height = 2048;
-            mainLight.shadow.camera.near = 0.1;
-            mainLight.shadow.camera.far = 50;
-            mainLight.shadow.camera.left = -5;
-            mainLight.shadow.camera.right = 5;
-            mainLight.shadow.camera.top = 5;
-            mainLight.shadow.camera.bottom = -5;
-            scene.add(mainLight);
-            
-            // 3. Заполняющий свет
-            const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
-            fillLight.position.set(-3, 5, 2);
-            scene.add(fillLight);
-            
-            // 4. Свет снизу для мягкости
-            const bottomLight = new THREE.DirectionalLight(0xffffff, 0.2);
-            bottomLight.position.set(0, -2, 0);
-            scene.add(bottomLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 3.0);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
             
             // Reticle для размещения (минималистичный)
             const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
@@ -349,25 +323,15 @@
                         // Масштабируем кресло до подходящего размера
                         chairTemplate.scale.set(0.4, 0.4, 0.4);
                         
-                        // Настраиваем материалы для красоты
+                        // ПРИМЕНЯЕМ ПРОВЕРЕННЫЙ ПОДХОД из Debug Spaces
                         chairTemplate.traverse(function(child) {
                             if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                                
-                                if (child.material) {
-                                    // Улучшаем существующие материалы
-                                    if (child.material.map) {
-                                        child.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                                    }
-                                    
-                                    // Добавляем физические свойства
-                                    if (child.material.isMeshStandardMaterial || child.material.isMeshPhysicalMaterial) {
-                                        child.material.envMapIntensity = 0.5;
-                                        child.material.roughness = child.material.roughness || 0.7;
-                                        child.material.metalness = child.material.metalness || 0.1;
-                                    }
-                                }
+                                // Заменяем ВСЕ материалы на MeshBasicMaterial с emissive
+                                child.material = new THREE.MeshBasicMaterial({
+                                    color: 0x8B4513, // Коричневый цвет кресла
+                                    emissive: 0x332211, // Коричневое свечение
+                                    emissiveIntensity: 0.3
+                                });
                             }
                         });
                         
@@ -390,39 +354,35 @@
         function createBeautifulFallbackChair() {
             const group = new THREE.Group();
             
-            // Красивые материалы
-            const seatMaterial = new THREE.MeshStandardMaterial({ 
+            // ПРОВЕРЕННЫЕ материалы (как в Debug Spaces)
+            const seatMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0x8B4513,
-                roughness: 0.7,
-                metalness: 0.1
+                emissive: 0x332211,
+                emissiveIntensity: 0.3
             });
             
-            const backMaterial = new THREE.MeshStandardMaterial({ 
+            const backMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0x654321,
-                roughness: 0.8,
-                metalness: 0.05
+                emissive: 0x221100,
+                emissiveIntensity: 0.3
             });
             
-            const legMaterial = new THREE.MeshStandardMaterial({ 
+            const legMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0x2F1B14,
-                roughness: 0.6,
-                metalness: 0.2
+                emissive: 0x110800,
+                emissiveIntensity: 0.3
             });
             
             // Сиденье
             const seatGeometry = new THREE.BoxGeometry(1.0, 0.15, 1.0);
             const seat = new THREE.Mesh(seatGeometry, seatMaterial);
             seat.position.y = 0.5;
-            seat.castShadow = true;
-            seat.receiveShadow = true;
             group.add(seat);
             
             // Спинка
             const backGeometry = new THREE.BoxGeometry(1.0, 1.2, 0.15);
             const back = new THREE.Mesh(backGeometry, backMaterial);
             back.position.set(0, 1.1, -0.425);
-            back.castShadow = true;
-            back.receiveShadow = true;
             group.add(back);
             
             // Ножки
@@ -437,8 +397,6 @@
             legPositions.forEach(function(pos) {
                 const leg = new THREE.Mesh(legGeometry, legMaterial);
                 leg.position.set(pos[0], pos[1], pos[2]);
-                leg.castShadow = true;
-                leg.receiveShadow = true;
                 group.add(leg);
             });
             
@@ -481,16 +439,16 @@
             const chair = chairTemplate.clone();
             
             if (reticle.visible) {
-                // Размещаем на найденной поверхности
-                chair.matrix.fromArray(reticle.matrix.elements);
-                chair.matrixAutoUpdate = false;
-                status.textContent = '🪑 Кресло размещено на поверхности';
-            } else {
-                // Размещаем перед пользователем
-                chair.position.set(0, -0.2, -1.5);
-                chair.matrixAutoUpdate = true;
-                status.textContent = '🪑 Кресло размещено перед вами';
-            }
+                            // Размещаем на найденной поверхности
+            chair.matrix.fromArray(reticle.matrix.elements);
+            chair.matrixAutoUpdate = false;
+            status.textContent = '🪑 Кресло размещено на поверхности';
+        } else {
+            // Размещаем перед пользователем (БЛИЖЕ!)
+            chair.position.set(0, 0, -0.8); // 80см перед камерой
+            chair.matrixAutoUpdate = true;
+            status.textContent = '🪑 Кресло размещено перед вами (80см)';
+        }
             
             scene.add(chair);
             placedChairs.push(chair);
