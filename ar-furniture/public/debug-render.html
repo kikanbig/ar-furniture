@@ -85,6 +85,7 @@
     
     <div id="controls" class="controls hidden">
         <button id="add-cube" class="btn">📦 ДОБАВИТЬ КУБ</button>
+        <button id="camera-cube" class="btn">📷 КУБ К КАМЕРЕ</button>
         <button id="render-info" class="btn">📊 RENDER INFO</button>
         <button id="copy-log" class="btn">📋 СКОПИРОВАТЬ ЛОГ</button>
         <button id="exit-btn" class="btn">❌ ВЫХОД</button>
@@ -380,6 +381,38 @@
                     addLog('🖼️ Textures: ' + info.memory.textures);
                 }
                 addLog('🎯 ДОЛЖНЫ БЫТЬ ВИДНЫ: красный куб, зеленая сфера, синий цилиндр');
+            });
+
+            document.getElementById('camera-cube').addEventListener('click', function() {
+                addLog('📷 === ДОБАВЛЕНИЕ КУБА К КАМЕРЕ ===');
+                
+                // Получаем камеру
+                const cameraGroup = renderer.xr.getCamera();
+                
+                // Создаем яркий куб
+                const geometry = new THREE.BoxGeometry(1, 1, 1);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: 0xFFFF00, // Ярко-желтый
+                    transparent: false
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                
+                // Размещаем ПРЯМО ПЕРЕД КАМЕРОЙ
+                if (cameraGroup && cameraGroup.position) {
+                    cube.position.copy(cameraGroup.position);
+                    cube.position.z -= 2; // 2 метра вперед
+                    addLog('📍 Куб привязан к камере: ' + 
+                           cube.position.x.toFixed(2) + ', ' + 
+                           cube.position.y.toFixed(2) + ', ' + 
+                           cube.position.z.toFixed(2));
+                } else {
+                    cube.position.set(0, 0, -1.5);
+                    addLog('📍 Куб размещен fallback: (0, 0, -1.5)');
+                }
+                
+                scene.add(cube);
+                objects.push(cube);
+                addLog('✅ ЖЕЛТЫЙ куб привязан к камере! Всего: ' + objects.length);
             });
 
             document.getElementById('copy-log').addEventListener('click', function() {
