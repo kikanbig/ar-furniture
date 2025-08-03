@@ -45,6 +45,14 @@ const furnitureDatabase = {
         price: '180,000 ₽',
         model: '/models/bellagio-sofa.glb',
         qrCode: null
+    },
+    'chair-modern': {
+        id: 'chair-modern',
+        name: 'Кресло Modern',
+        description: 'Качественное современное кресло для тестирования AR',
+        price: '85,000 ₽',
+        model: '/models/chair-modern.glb',
+        qrCode: null
     }
 };
 
@@ -128,6 +136,20 @@ app.get('/pro/:furnitureId', (req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'webxr-professional.html'));
     } else {
         res.status(404).json({ error: 'Мебель не найдена' });
+    }
+});
+
+// 🪑 AR КРЕСЛО (специальная версия только для кресла)
+app.get('/chair', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'chair-ar.html'));
+});
+
+app.get('/chair/:furnitureId', (req, res) => {
+    const furniture = furnitureDatabase[req.params.furnitureId];
+    if (furniture && furniture.id.includes('chair')) {
+        res.sendFile(path.join(__dirname, 'public', 'chair-ar.html'));
+    } else {
+        res.status(404).json({ error: 'Кресло не найдено' });
     }
 });
 
@@ -221,6 +243,61 @@ app.get('/api/pro-qr/:furnitureId', async (req, res) => {
     }
 });
 
+// API для генерации Chair AR QR-кодов
+app.get('/api/chair-qr/:furnitureId', async (req, res) => {
+    try {
+        const furniture = furnitureDatabase[req.params.furnitureId];
+        if (!furniture || !furniture.id.includes('chair')) {
+            return res.status(404).json({ error: 'Кресло не найдено' });
+        }
+
+        const url = `${req.protocol}://${req.get('host')}/chair/${req.params.furnitureId}`;
+        const qrCodeDataURL = await QRCode.toDataURL(url, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#8B4513',
+                light: '#FFFFFF'
+            }
+        });
+
+        res.json({
+            furnitureId: req.params.furnitureId,
+            url: url,
+            qrCode: qrCodeDataURL,
+            type: 'AR Chair'
+        });
+    } catch (error) {
+        console.error('Ошибка генерации Chair QR-кода:', error);
+        res.status(500).json({ error: 'Ошибка генерации QR-кода' });
+    }
+});
+
+// API для QR-кода общего кресла
+app.get('/api/chair-qr', async (req, res) => {
+    try {
+        const url = `${req.protocol}://${req.get('host')}/chair`;
+        const qrCodeDataURL = await QRCode.toDataURL(url, {
+            width: 300,
+            margin: 2,
+            color: {
+                dark: '#8B4513',
+                light: '#FFFFFF'
+            }
+        });
+
+        res.json({
+            furnitureId: 'chair-modern',
+            url: url,
+            qrCode: qrCodeDataURL,
+            type: 'AR Chair Modern'
+        });
+    } catch (error) {
+        console.error('Ошибка генерации Chair QR-кода:', error);
+        res.status(500).json({ error: 'Ошибка генерации QR-кода' });
+    }
+});
+
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -244,6 +321,11 @@ app.get('/fixed-qr', (req, res) => {
 // Страница со всеми версиями
 app.get('/all-versions', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'all-versions.html'));
+});
+
+// Тестовая страница кресла
+app.get('/chair-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'chair-test.html'));
 });
 
 // Обработка ошибок
