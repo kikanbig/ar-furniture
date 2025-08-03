@@ -172,6 +172,11 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(-50%, -50%) scale(3) translateY(0px); }
+            50% { transform: translate(-50%, -50%) scale(3) translateY(-10px); }
+        }
     </style>
     
     <div id="info-panel">
@@ -242,12 +247,12 @@
             debugInfo.innerHTML = '🚀 Запуск простой камеры...';
             
             try {
-                // Прямой запрос камеры
+                // Прямой запрос камеры с правильными настройками
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 640, max: 1280 },
+                        height: { ideal: 480, max: 720 }
                     },
                     audio: false
                 });
@@ -270,34 +275,108 @@
                 document.body.appendChild(video);
                 
                 video.onloadedmetadata = () => {
-                    debugInfo.innerHTML = `✅ КАМЕРА РАБОТАЕТ! ${video.videoWidth}x${video.videoHeight}`;
+                    debugInfo.innerHTML = `✅ КАМЕРА РАБОТАЕТ! ${video.videoWidth}x${video.videoHeight}<br>🎯 Добавляем AR элементы...`;
+                    
+                    // Создаем AR overlay поверх камеры
+                    const arOverlay = document.createElement('div');
+                    arOverlay.style.position = 'fixed';
+                    arOverlay.style.top = '0';
+                    arOverlay.style.left = '0';
+                    arOverlay.style.width = '100%';
+                    arOverlay.style.height = '100%';
+                    arOverlay.style.zIndex = '100';
+                    arOverlay.style.pointerEvents = 'none';
+                    
+                    // Простой 3D диван в центре экрана
+                    const sofa3D = document.createElement('div');
+                    sofa3D.innerHTML = '🛋️';
+                    sofa3D.style.position = 'absolute';
+                    sofa3D.style.top = '50%';
+                    sofa3D.style.left = '50%';
+                    sofa3D.style.transform = 'translate(-50%, -50%) scale(3)';
+                    sofa3D.style.fontSize = '60px';
+                    sofa3D.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+                    sofa3D.style.animation = 'float 3s ease-in-out infinite';
+                    
+                    // Информация о диване
+                    const sofaInfo = document.createElement('div');
+                    sofaInfo.style.position = 'absolute';
+                    sofaInfo.style.bottom = '100px';
+                    sofaInfo.style.left = '50%';
+                    sofaInfo.style.transform = 'translateX(-50%)';
+                    sofaInfo.style.background = 'rgba(0,0,0,0.8)';
+                    sofaInfo.style.color = 'white';
+                    sofaInfo.style.padding = '15px 25px';
+                    sofaInfo.style.borderRadius = '15px';
+                    sofaInfo.style.textAlign = 'center';
+                    sofaInfo.style.fontFamily = 'Arial, sans-serif';
+                    sofaInfo.innerHTML = `
+                        <h3 style="margin: 0 0 10px 0;">🛋️ Диван Cannoli</h3>
+                        <p style="margin: 0; opacity: 0.9;">Элегантный диван в стиле модерн</p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold; color: #4CAF50;">150,000 ₽</p>
+                    `;
+                    
+                    arOverlay.appendChild(sofa3D);
+                    arOverlay.appendChild(sofaInfo);
+                    document.body.appendChild(arOverlay);
+                    
+                    // Кнопки управления
+                    const controls = document.createElement('div');
+                    controls.style.position = 'fixed';
+                    controls.style.bottom = '20px';
+                    controls.style.left = '50%';
+                    controls.style.transform = 'translateX(-50%)';
+                    controls.style.zIndex = '10001';
+                    controls.style.display = 'flex';
+                    controls.style.gap = '10px';
+                    
+                    // Кнопка поворота
+                    const rotateBtn = document.createElement('button');
+                    rotateBtn.innerHTML = '🔄 ПОВЕРНУТЬ';
+                    rotateBtn.style.padding = '12px 18px';
+                    rotateBtn.style.background = '#2196F3';
+                    rotateBtn.style.color = 'white';
+                    rotateBtn.style.border = 'none';
+                    rotateBtn.style.borderRadius = '10px';
+                    rotateBtn.style.fontSize = '14px';
+                    rotateBtn.style.fontWeight = 'bold';
+                    rotateBtn.style.cursor = 'pointer';
+                    
+                    let rotation = 0;
+                    rotateBtn.onclick = () => {
+                        rotation += 90;
+                        sofa3D.style.transform = `translate(-50%, -50%) scale(3) rotateZ(${rotation}deg)`;
+                    };
                     
                     // Кнопка закрытия
                     const closeBtn = document.createElement('button');
                     closeBtn.innerHTML = '❌ ЗАКРЫТЬ';
-                    closeBtn.style.position = 'fixed';
-                    closeBtn.style.bottom = '20px';
-                    closeBtn.style.right = '20px';
-                    closeBtn.style.zIndex = '10001';
-                    closeBtn.style.padding = '15px 20px';
+                    closeBtn.style.padding = '12px 18px';
                     closeBtn.style.background = '#ff4444';
                     closeBtn.style.color = 'white';
                     closeBtn.style.border = 'none';
                     closeBtn.style.borderRadius = '10px';
-                    closeBtn.style.fontSize = '16px';
+                    closeBtn.style.fontSize = '14px';
                     closeBtn.style.fontWeight = 'bold';
+                    closeBtn.style.cursor = 'pointer';
                     
                     closeBtn.onclick = () => {
                         stream.getTracks().forEach(track => track.stop());
                         document.body.removeChild(video);
-                        document.body.removeChild(closeBtn);
+                        document.body.removeChild(arOverlay);
+                        document.body.removeChild(controls);
                         debugInfo.style.display = 'none';
                         btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
                         btn.disabled = false;
                         btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
                     };
                     
-                    document.body.appendChild(closeBtn);
+                    controls.appendChild(rotateBtn);
+                    controls.appendChild(closeBtn);
+                    document.body.appendChild(controls);
+                    
+                    // Обновить диагностику
+                    debugInfo.innerHTML = `✅ AR ГОТОВ! Диван Cannoli в центре экрана`;
                     
                     // Скрыть диагностику через 3 секунды
                     setTimeout(() => {
