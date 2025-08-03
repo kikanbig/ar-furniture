@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪑 AR Chair Working | Рабочая версия на основе Debug Spaces</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #9c27b0, #673ab7);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 11px;
+            max-height: 350px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 2px solid #9c27b0;
+        }
+        
+        .hidden { display: none; }
+        
+        .status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #9c27b0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            z-index: 9999;
+            max-width: 180px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🪑 AR Chair Working</h1>
+    <p>Рабочая версия на основе Debug Spaces - только кресло</p>
+    
+    <button id="start-btn" class="start-btn">
+        🚀 ЗАПУСТИТЬ РАБОЧЕЕ КРЕСЛО
+    </button>
+    
+    <div id="log" class="log">
+        📝 Chair Working готов...<br>
+        🎯 Основано на РАБОТАЮЩЕМ Debug Spaces<br>
+    </div>
+    
+    <div id="status" class="status hidden">
+        ⏱️ Frame: 0<br>
+        📦 Spaces: 0<br>
+        🪑 Кресел: 0
+    </div>
+
+    <script>
+        let session = null;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let referenceSpaces = {};
+        let frameCount = 0;
+        let objects = [];
+        let chairTemplate = null;
+        
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function startChairWorking() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '🔄 Запуск...';
+            
+            try {
+                addLog('🪑 === CHAIR WORKING AR ===');
+                addLog('🎯 Основано на РАБОТАЮЩЕМ Debug Spaces');
+                
+                // WebXR Polyfill
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    const polyfill = new WebXRPolyfill();
+                    addLog('🔧 WebXR Polyfill активирован');
+                }
+                
+                if (!navigator.xr) {
+                    throw new Error('WebXR недоступен');
+                }
+                
+                // Создание AR сессии (ТОЧНО как в Debug Spaces)
+                session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local'],
+                    optionalFeatures: ['local-floor', 'unbounded']
+                });
+                
+                addLog('✅ AR сессия создана');
+                
+                // Тестируем ВСЕ reference spaces (как в Debug Spaces)
+                await testAllReferenceSpaces();
+                
+                // Настройка рендерера (ТОЧНО как в Debug Spaces)
+                await setupRenderer();
+                setupScene();
+                
+                // Загружаем кресло
+                await loadChair();
+                
+                // Создаем кресла для каждого working space (как в Debug Spaces)
+                await createChairsForSpaces();
+                
+                // Запуск
+                session.requestAnimationFrame(onXRFrame);
+                
+                startBtn.innerHTML = '✅ CHAIR WORKING АКТИВЕН';
+                status.classList.remove('hidden');
+                
+                addLog('🎉 Chair Working запущен!');
+                
+            } catch (error) {
+                addLog('❌ ОШИБКА: ' + error.message);
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🚀 ЗАПУСТИТЬ РАБОЧЕЕ КРЕСЛО';
+            }
+        }
+
+        async function testAllReferenceSpaces() {
+            addLog('🔍 === ТЕСТИРОВАНИЕ REFERENCE SPACES ===');
+            
+            const spacesToTest = ['viewer', 'local', 'local-floor', 'unbounded'];
+            
+            for (const spaceName of spacesToTest) {
+                try {
+                    const space = await session.requestReferenceSpace(spaceName);
+                    referenceSpaces[spaceName] = space;
+                    addLog(`✅ ${spaceName} space - ДОСТУПЕН`);
+                } catch (error) {
+                    addLog(`❌ ${spaceName} space - НЕ ДОСТУПЕН: ${error.message}`);
+                }
+            }
+            
+            const availableSpaces = Object.keys(referenceSpaces);
+            addLog(`📊 Доступно spaces: ${availableSpaces.length} из ${spacesToTest.length}`);
+            addLog(`📋 Доступные: ${availableSpaces.join(', ')}`);
+        }
+
+        async function setupRenderer() {
+            addLog('🔧 Настройка рендерера...');
+            
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl', { xrCompatible: true });
+            
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                context: gl,
+                alpha: true
+            });
+            
+            renderer.xr.enabled = true;
+            renderer.xr.setSession(session);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            const baseLayer = new XRWebGLLayer(session, gl);
+            await session.updateRenderState({ baseLayer: baseLayer });
+            
+            addLog('✅ Рендерер готов');
+        }
+
+        function setupScene() {
+            addLog('🎨 Создание сцены...');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera();
+            
+            // МАКСИМАЛЬНОЕ освещение (как в Debug Spaces)
+            const light = new THREE.AmbientLight(0xffffff, 5.0);
+            scene.add(light);
+            
+            addLog('✅ Сцена готова');
+        }
+
+        async function loadChair() {
+            return new Promise((resolve) => {
+                const loader = new THREE.GLTFLoader();
+                
+                addLog('🪑 Загрузка кресла chair-modern.glb...');
+                
+                loader.load(
+                    '/models/chair-modern.glb',
+                    function(gltf) {
+                        chairTemplate = gltf.scene.clone();
+                        chairTemplate.scale.set(0.3, 0.3, 0.3);
+                        
+                        // ПРИМЕНЯЕМ ПРОВЕРЕННЫЙ ПОДХОД из Debug Spaces
+                        chairTemplate.traverse(function(child) {
+                            if (child.isMesh) {
+                                // Заменяем ВСЕ материалы на MeshBasicMaterial с emissive
+                                child.material = new THREE.MeshBasicMaterial({
+                                    color: 0x8B4513, // Коричневый цвет кресла
+                                    emissive: 0x332211, // Коричневое свечение
+                                    emissiveIntensity: 0.3
+                                });
+                            }
+                        });
+                        
+                        addLog('✅ Кресло chair-modern.glb загружено!');
+                        resolve();
+                    },
+                    function(progress) {
+                        const percent = Math.round((progress.loaded / progress.total) * 100);
+                        if (percent % 25 === 0) {
+                            addLog('🪑 Загрузка кресла: ' + percent + '%');
+                        }
+                    },
+                    function(error) {
+                        addLog('⚠️ Ошибка загрузки GLB, создаем простое кресло');
+                        createFallbackChair();
+                        resolve();
+                    }
+                );
+            });
+        }
+
+        function createFallbackChair() {
+            const group = new THREE.Group();
+            
+            // ПРОВЕРЕННЫЕ материалы (как в Debug Spaces)
+            const seatMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x8B4513,
+                emissive: 0x332211,
+                emissiveIntensity: 0.3
+            });
+            
+            const backMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x654321,
+                emissive: 0x221100,
+                emissiveIntensity: 0.3
+            });
+            
+            const legMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x2F1B14,
+                emissive: 0x110800,
+                emissiveIntensity: 0.3
+            });
+            
+            // Сиденье
+            const seatGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.8);
+            const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+            seat.position.y = 0.4;
+            group.add(seat);
+            
+            // Спинка
+            const backGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.1);
+            const back = new THREE.Mesh(backGeometry, backMaterial);
+            back.position.set(0, 0.8, -0.35);
+            group.add(back);
+            
+            // Ножки
+            const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.4);
+            const legPositions = [
+                [-0.3, 0.2, -0.3], [0.3, 0.2, -0.3], 
+                [-0.3, 0.2, 0.3], [0.3, 0.2, 0.3]
+            ];
+            
+            legPositions.forEach(function(pos) {
+                const leg = new THREE.Mesh(legGeometry, legMaterial);
+                leg.position.set(pos[0], pos[1], pos[2]);
+                group.add(leg);
+            });
+            
+            chairTemplate = group;
+            addLog('🔧 Простое кресло создано с emissive материалами');
+        }
+
+        async function createChairsForSpaces() {
+            addLog('📦 === СОЗДАНИЕ КРЕСЕЛ ДЛЯ КАЖДОГО SPACE ===');
+            addLog('✅ Копируем ТОЧНУЮ конфигурацию из Debug Spaces');
+            
+            // Создаем кресло для каждого доступного space (как в Debug Spaces!)
+            for (const [spaceName, space] of Object.entries(referenceSpaces)) {
+                if (!chairTemplate) {
+                    addLog('⚠️ Кресло еще не загружено');
+                    continue;
+                }
+                
+                const chair = chairTemplate.clone();
+                
+                // ТОЧНЫЕ позиции из Debug Spaces
+                let position;
+                switch (spaceName) {
+                    case 'viewer':
+                        position = new THREE.Vector3(0, 0, -0.5); // 50см перед головой
+                        break;
+                    case 'local':
+                        position = new THREE.Vector3(0, 0, -1); // 1м от origin
+                        break;
+                    case 'local-floor':
+                        position = new THREE.Vector3(0, 0.5, -1); // 50см над полом
+                        break;
+                    case 'unbounded':
+                        position = new THREE.Vector3(0, 0, -1.2);
+                        break;
+                    default:
+                        position = new THREE.Vector3(0, 0, -1);
+                }
+                
+                chair.position.copy(position);
+                scene.add(chair);
+                
+                objects.push({
+                    object: chair,
+                    spaceName: spaceName,
+                    type: 'chair',
+                    position: position.clone()
+                });
+                
+                addLog(`✅ ${spaceName}: кресло в (${position.x}, ${position.y}, ${position.z})`);
+            }
+            
+            addLog(`📦 Создано кресел: ${objects.length}`);
+            
+            // ДОПОЛНИТЕЛЬНЫЕ КРЕСЛА (как в Debug Spaces!)
+            if (objects.length > 0) {
+                addLog('📦 === ДОПОЛНИТЕЛЬНЫЕ КРЕСЛА ===');
+                
+                // Кресло в центре
+                const centerChair = chairTemplate.clone();
+                centerChair.position.set(0, 0, 0);
+                scene.add(centerChair);
+                objects.push({
+                    object: centerChair,
+                    spaceName: 'origin',
+                    type: 'chair',
+                    position: new THREE.Vector3(0, 0, 0)
+                });
+                addLog('✅ Кресло в origin (0, 0, 0)');
+                
+                // Кресло высоко
+                const highChair = chairTemplate.clone();
+                highChair.position.set(0, 1, -0.5);
+                scene.add(highChair);
+                objects.push({
+                    object: highChair,
+                    spaceName: 'high',
+                    type: 'chair',
+                    position: new THREE.Vector3(0, 1, -0.5)
+                });
+                addLog('✅ Кресло высоко (0, 1, -0.5)');
+            }
+            
+            addLog(`📊 ИТОГО кресел: ${objects.length}`);
+        }
+
+        function onXRFrame(time, frame) {
+            session.requestAnimationFrame(onXRFrame);
+            frameCount++;
+            
+            // Обновляем статус
+            status.innerHTML = `⏱️ Frame: ${frameCount}<br>📦 Spaces: ${Object.keys(referenceSpaces).length}<br>🪑 Кресел: ${objects.length}`;
+            
+            // Логирование каждые 60 кадров
+            if (frameCount % 60 === 0) {
+                addLog(`🔄 Frame ${frameCount} - рендеринг ${objects.length} кресел`);
+                
+                if (frameCount === 60) {
+                    addLog('👀 ИЩИТЕ КРЕСЛА:');
+                    objects.forEach((item, index) => {
+                        addLog(`  Кресло (${item.spaceName}): ${item.position.x.toFixed(1)}, ${item.position.y.toFixed(1)}, ${item.position.z.toFixed(1)}`);
+                    });
+                }
+                
+                if (frameCount === 180) {
+                    addLog('🤔 Все еще не видно кресла?');
+                    addLog('💡 Попробуйте:');
+                    addLog('- Поворачиваться МЕДЛЕННО');
+                    addLog('- Наклонять телефон вверх/вниз');
+                    addLog('- Подходить/отходить от стен');
+                    addLog('- Движения головой для активации tracking');
+                }
+            }
+            
+            // Анимация для заметности (как в Debug Spaces)
+            const rotationSpeed = time * 0.001;
+            objects.forEach((item, index) => {
+                if (item.object && item.object.rotation) {
+                    item.object.rotation.y = rotationSpeed * (index + 1);
+                }
+            });
+            
+            try {
+                renderer.render(scene, camera);
+            } catch (error) {
+                if (frameCount < 5) {
+                    addLog('❌ ОШИБКА РЕНДЕРИНГА: ' + error.message);
+                }
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startChairWorking);
+            addLog('🪑 Chair Working готов к запуску');
+            addLog('🎯 Основано на РАБОТАЮЩЕМ Debug Spaces');
+        });
+    </script>
+</body>
+</html> 
