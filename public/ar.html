@@ -101,62 +101,55 @@
 </head>
 <body>
     <div id="loading">
-        <h2>AR Мебель</h2>
-        <p>Для работы дополненной реальности нужен доступ к камере</p>
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
-            <strong>Как разрешить камеру:</strong>
-            <ol style="margin: 10px 0; padding-left: 20px;">
-                <li>Нажмите кнопку "Включить камеру" ниже</li>
-                <li>В появившемся окне выберите "Разрешить"</li>
-                <li>Если окно не появилось, нажмите на значок камеры в адресной строке</li>
-                <li>На мобильных: ⋮ (меню) → Настройки сайта → Камера → Разрешить</li>
+        <h2>🎯 AR Мебель - Дополненная реальность</h2>
+        <div style="background: #e3f2fd; padding: 20px; border-radius: 15px; margin: 20px 0; border-left: 4px solid #2196F3;">
+            <h3 style="margin: 0 0 10px 0; color: #1976D2;">📱 Инструкции для мобильного телефона:</h3>
+            <ol style="margin: 10px 0; padding-left: 20px; color: #424242;">
+                <li><strong>Нажмите большую синюю кнопку ниже</strong></li>
+                <li><strong>Когда появится запрос - выберите "Разрешить"</strong></li>
+                <li>Если запрос не появился - нажмите на адресную строку</li>
+                <li>Найдите значок камеры 📷 и нажмите "Разрешить"</li>
             </ol>
         </div>
-        <button id="camera-btn" onclick="requestCamera()" style="
-            background: #007bff; 
+        
+        <button id="start-ar-btn" onclick="startAR()" style="
+            background: linear-gradient(45deg, #2196F3, #21CBF3); 
             color: white; 
             border: none; 
-            padding: 15px 30px; 
-            border-radius: 25px; 
+            padding: 20px 40px; 
+            border-radius: 30px; 
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            margin: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        ">📷 Включить камеру</button>
-        <button onclick="activateAR()" style="
-            background: #28a745; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 25px; 
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        ">🎯 Активировать AR</button>
-        <button onclick="forceCamera()" style="
-            background: #ffc107; 
-            color: #212529; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 25px; 
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        ">⚡ Принудительно запросить камеру</button>
+            margin: 20px;
+            box-shadow: 0 6px 12px rgba(33, 150, 243, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            📷 ЗАПУСТИТЬ AR
+        </button>
+        
+        <div id="debug-info" style="
+            background: #f5f5f5; 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            font-family: monospace; 
+            font-size: 12px; 
+            color: #666;
+            display: none;
+        "></div>
+        
         <button onclick="location.reload()" style="
-            background: #6c757d; 
+            background: #666; 
             color: white; 
             border: none; 
             padding: 10px 20px; 
             border-radius: 20px; 
             cursor: pointer;
             font-size: 14px;
-            margin: 5px;
+            margin: 10px;
         ">🔄 Обновить страницу</button>
     </div>
     
@@ -209,181 +202,91 @@
     </div>
     
     <script>
-        // Определить мобильное устройство
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        console.log('Мобильное устройство:', isMobile);
-        
-        // Глобальная функция для запроса камеры
-        async function requestCamera() {
-            console.log('Кнопка камеры нажата!');
-            
-            const cameraBtn = document.getElementById('camera-btn');
+        // Простая и надежная функция запуска AR
+        async function startAR() {
+            const btn = document.getElementById('start-ar-btn');
             const loading = document.getElementById('loading');
+            const debugInfo = document.getElementById('debug-info');
             
-            if (!cameraBtn || !loading) {
-                console.error('Элементы не найдены!');
-                return;
-            }
+            // Показать отладочную информацию
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML = 'Запуск AR... Проверяем браузер...';
             
             try {
-                console.log('Начинаем запрос камеры...');
-                cameraBtn.textContent = '⏳ Запрашиваем...';
-                cameraBtn.disabled = true;
+                // Изменить кнопку
+                btn.innerHTML = '⏳ ЗАПРАШИВАЕМ КАМЕРУ...';
+                btn.disabled = true;
+                btn.style.background = '#666';
                 
-                // Проверить поддержку getUserMedia
+                debugInfo.innerHTML += '<br>Проверяем поддержку getUserMedia...';
+                
+                // Проверить поддержку
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('getUserMedia не поддерживается в этом браузере');
+                    throw new Error('Ваш браузер не поддерживает камеру');
                 }
                 
-                console.log('getUserMedia поддерживается, запрашиваем камеру...');
+                debugInfo.innerHTML += '<br>getUserMedia поддерживается!';
+                debugInfo.innerHTML += '<br>Запрашиваем камеру...';
                 
-                // Простые параметры для всех устройств
-                const constraints = {
-                    video: {
-                        facingMode: 'environment', // Задняя камера
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
+                // Запросить камеру с самыми простыми параметрами
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
                     audio: false
-                };
+                });
                 
-                console.log('Параметры камеры:', constraints);
+                debugInfo.innerHTML += '<br>✅ КАМЕРА ПОЛУЧЕНА!';
+                debugInfo.innerHTML += '<br>Треков видео: ' + stream.getVideoTracks().length;
                 
-                // Запросить доступ к камере
-                let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                } catch (error) {
-                    console.log('Первый запрос не удался, пробуем без параметров...');
-                    // Попробовать без параметров
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                }
-                
-                console.log('Камера подключена!', stream);
-                
-                // Показать успешное сообщение
+                // Показать успех
                 loading.innerHTML = `
-                    <h2>✅ Камера подключена!</h2>
-                    <p>Наведите камеру на поверхность для AR</p>
-                    <div style="width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-                    <p style="font-size: 14px; color: #666;">AR сцена загружается...</p>
+                    <div style="text-align: center; padding: 40px;">
+                        <h2 style="color: #4CAF50;">🎉 КАМЕРА АКТИВИРОВАНА!</h2>
+                        <div style="width: 80px; height: 80px; border: 6px solid #f3f3f3; border-top: 6px solid #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; margin: 30px auto;"></div>
+                        <p style="font-size: 18px; color: #666;">AR сцена загружается...</p>
+                        <p style="font-size: 14px; color: #999;">Наведите камеру на маркер</p>
+                    </div>
                 `;
                 
-                // Скрыть загрузку через 3 секунды
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                }, 3000);
-                
-                // Остановить поток после инициализации AR
+                // Остановить поток через 3 секунды и скрыть загрузку
                 setTimeout(() => {
                     if (stream && stream.getTracks) {
                         stream.getTracks().forEach(track => track.stop());
-                        console.log('Поток камеры остановлен');
                     }
-                }, 4000);
+                    loading.style.display = 'none';
+                    debugInfo.innerHTML += '<br>AR сцена активирована!';
+                }, 3000);
                 
             } catch (error) {
-                console.error('Ошибка камеры:', error);
+                console.error('Ошибка запуска AR:', error);
                 
-                cameraBtn.textContent = '📷 Включить камеру';
-                cameraBtn.disabled = false;
+                debugInfo.innerHTML += '<br>❌ ОШИБКА: ' + error.message;
                 
-                // Специальные инструкции для мобильных устройств
-                const mobileInstructions = isMobile ? `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
-                        <strong>Для мобильного устройства:</strong>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>Нажмите на значок камеры 📷 в адресной строке</li>
-                            <li>Выберите "Разрешить" или "Allow"</li>
-                            <li>Если значок не виден, нажмите ⋮ (меню) → Настройки сайта</li>
-                            <li>Найдите "Камера" и выберите "Разрешить"</li>
-                            <li>Обновите страницу и попробуйте снова</li>
-                        </ul>
-                    </div>
-                ` : `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
-                        <strong>Как исправить:</strong>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>Нажмите на значок камеры 🔒 в адресной строке</li>
-                            <li>Выберите "Разрешить" или "Allow"</li>
-                            <li>Обновите страницу и попробуйте снова</li>
-                            <li>Убедитесь, что сайт открыт по HTTPS</li>
-                        </ul>
-                    </div>
-                `;
+                // Восстановить кнопку
+                btn.innerHTML = '📷 ЗАПУСТИТЬ AR';
+                btn.disabled = false;
+                btn.style.background = 'linear-gradient(45deg, #2196F3, #21CBF3)';
                 
-                // Показать детальную инструкцию с отладочной информацией
+                // Показать детальную помощь
                 loading.innerHTML = `
-                    <h2>❌ Ошибка доступа к камере</h2>
-                    <p>Браузер заблокировал доступ к камере</p>
-                    <p style="font-size: 12px; color: #666;">Ошибка: ${error.message}</p>
-                    ${mobileInstructions}
-                    <button onclick="requestCamera()" style="
-                        background: #007bff; 
-                        color: white; 
-                        border: none; 
-                        padding: 15px 30px; 
-                        border-radius: 25px; 
-                        cursor: pointer;
-                        font-size: 16px;
-                        font-weight: bold;
-                        margin: 10px;
-                    ">🔄 Попробовать снова</button>
-                    <button onclick="location.reload()" style="
-                        background: #6c757d; 
-                        color: white; 
-                        border: none; 
-                        padding: 10px 20px; 
-                        border-radius: 20px; 
-                        cursor: pointer;
-                        font-size: 14px;
-                        margin: 5px;
-                    ">🔄 Обновить страницу</button>
-                `;
-            }
-        }
-        
-        // Проверить готовность DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM загружен, кнопка камеры готова');
-            console.log('User Agent:', navigator.userAgent);
-            
-            const cameraBtn = document.getElementById('camera-btn');
-            if (cameraBtn) {
-                console.log('Кнопка камеры найдена:', cameraBtn);
-            } else {
-                console.error('Кнопка камеры не найдена!');
-            }
-        });
-        
-        // Альтернативная функция активации AR
-        function activateAR() {
-            console.log('Активация AR...');
-            const loading = document.getElementById('loading');
-            
-            loading.innerHTML = `
-                <h2>🎯 Активация AR</h2>
-                <p>Попытка активации дополненной реальности...</p>
-                <div style="width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-                <p style="font-size: 14px; color: #666;">Если камера не активируется, попробуйте кнопку "Включить камеру"</p>
-            `;
-            
-            // Попробовать активировать AR через A-Frame
-            setTimeout(() => {
-                const scene = document.querySelector('a-scene');
-                if (scene) {
-                    console.log('A-Frame сцена найдена, активируем AR...');
-                    // Скрыть загрузку и показать AR
-                    setTimeout(() => {
-                        loading.style.display = 'none';
-                    }, 2000);
-                } else {
-                    console.error('A-Frame сцена не найдена');
-                    loading.innerHTML = `
-                        <h2>❌ Ошибка активации AR</h2>
-                        <p>Не удалось активировать дополненную реальность</p>
-                        <button onclick="requestCamera()" style="
-                            background: #007bff; 
+                    <div style="text-align: center; padding: 20px;">
+                        <h2 style="color: #f44336;">❌ НЕ УДАЛОСЬ ЗАПУСТИТЬ AR</h2>
+                        <p style="font-size: 16px; color: #666; margin: 20px 0;">
+                            Ошибка: ${error.message}
+                        </p>
+                        
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: left;">
+                            <h3 style="margin: 0 0 15px 0; color: #856404;">🔧 КАК ИСПРАВИТЬ:</h3>
+                            <ol style="margin: 0; padding-left: 20px; color: #856404;">
+                                <li><strong>Найдите в адресной строке значок камеры 📷</strong></li>
+                                <li><strong>Нажмите на него и выберите "Разрешить"</strong></li>
+                                <li>Если значок не виден - нажмите на замок 🔒 или ⋮</li>
+                                <li>Найдите настройки камеры и разрешите доступ</li>
+                                <li>Обновите страницу и попробуйте снова</li>
+                            </ol>
+                        </div>
+                        
+                        <button onclick="startAR()" style="
+                            background: linear-gradient(45deg, #2196F3, #21CBF3); 
                             color: white; 
                             border: none; 
                             padding: 15px 30px; 
@@ -392,71 +295,38 @@
                             font-size: 16px;
                             font-weight: bold;
                             margin: 10px;
-                        ">📷 Попробовать камеру</button>
-                    `;
-                }
-            }, 1000);
-        }
-        
-        // Принудительный запрос камеры
-        async function forceCamera() {
-            console.log('Принудительный запрос камеры...');
-            const loading = document.getElementById('loading');
-            
-            loading.innerHTML = `
-                <h2>⚡ Принудительный запрос камеры</h2>
-                <p>Попытка активации камеры...</p>
-                <div style="width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #ffc107; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-            `;
-            
-            try {
-                // Простой запрос камеры без параметров
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: true, 
-                    audio: false 
-                });
-                
-                console.log('Камера принудительно активирована!', stream);
-                
-                loading.innerHTML = `
-                    <h2>✅ Камера активирована!</h2>
-                    <p>Камера успешно подключена</p>
-                    <div style="width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #28a745; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-                    <p style="font-size: 14px; color: #666;">AR сцена загружается...</p>
-                `;
-                
-                setTimeout(() => {
-                    loading.style.display = 'none';
-                }, 3000);
-                
-            } catch (error) {
-                console.error('Ошибка принудительного запроса камеры:', error);
-                
-                loading.innerHTML = `
-                    <h2>❌ Не удалось активировать камеру</h2>
-                    <p>Ошибка: ${error.message}</p>
-                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left;">
-                        <strong>Попробуйте:</strong>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>Убедитесь, что переключатель камеры включен</li>
-                            <li>Нажмите "Запрашивать разрешение" в настройках</li>
-                            <li>Обновите страницу и попробуйте снова</li>
-                        </ul>
+                            text-transform: uppercase;
+                        ">🔄 ПОПРОБОВАТЬ СНОВА</button>
+                        
+                        <button onclick="location.reload()" style="
+                            background: #666; 
+                            color: white; 
+                            border: none; 
+                            padding: 15px 30px; 
+                            border-radius: 25px; 
+                            cursor: pointer;
+                            font-size: 16px;
+                            margin: 10px;
+                        ">🔄 ОБНОВИТЬ СТРАНИЦУ</button>
                     </div>
-                    <button onclick="forceCamera()" style="
-                        background: #ffc107; 
-                        color: #212529; 
-                        border: none; 
-                        padding: 15px 30px; 
-                        border-radius: 25px; 
-                        cursor: pointer;
-                        font-size: 16px;
-                        font-weight: bold;
-                        margin: 10px;
-                    ">🔄 Попробовать снова</button>
                 `;
             }
         }
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 AR приложение загружено');
+            console.log('📱 User Agent:', navigator.userAgent);
+            console.log('🌐 URL:', window.location.href);
+            
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.innerHTML = `
+                Браузер: ${navigator.userAgent}<br>
+                URL: ${window.location.href}<br>
+                HTTPS: ${window.location.protocol === 'https:' ? 'Да' : 'Нет'}<br>
+                getUserMedia: ${navigator.mediaDevices ? 'Поддерживается' : 'НЕ поддерживается'}
+            `;
+        });
     </script>
     <script src="js/ar-scene.js"></script>
 </body>
