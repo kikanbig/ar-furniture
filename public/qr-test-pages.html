@@ -180,17 +180,43 @@
             <!-- 🧪 Simple Test -->
             <div class="qr-card new">
                 <h3>🧪 Simple Test</h3>
-                <p><strong>ГАРАНТИРОВАННАЯ</strong> видимость объектов<br>
+                <p><strong>НАЧНИТЕ С ЭТОГО!</strong><br>
                 5 больших ярких объектов на разных расстояниях</p>
                 <div id="qr-simple" class="qr-code"></div>
                 <a href="ar-simple-test.html" class="link">ar-simple-test.html</a>
             </div>
             
-            <!-- 🔧 Fixed Positioning -->
+            <!-- 👁️ Viewer Pose -->
             <div class="qr-card new">
+                <h3>👁️ Viewer Pose</h3>
+                <p><strong>НОВЫЙ ПОДХОД</strong><br>
+                Размещение относительно головы пользователя</p>
+                <div id="qr-viewer" class="qr-code"></div>
+                <a href="ar-viewer-pose.html" class="link">ar-viewer-pose.html</a>
+            </div>
+            
+            <!-- 🔍 Debug Spaces -->
+            <div class="qr-card new">
+                <h3>🔍 Debug Spaces</h3>
+                <p><strong>ВСЕ REFERENCE SPACES</strong><br>
+                Тестирование всех способов позиционирования</p>
+                <div id="qr-spaces" class="qr-code"></div>
+                <a href="ar-debug-spaces.html" class="link">ar-debug-spaces.html</a>
+            </div>
+            
+            <!-- 🧮 Matrix Debug -->
+            <div class="qr-card new">
+                <h3>🧮 Matrix Debug</h3>
+                <p><strong>ПОЛНАЯ ДИАГНОСТИКА</strong><br>
+                Все матрицы, координаты, frustum culling</p>
+                <div id="qr-matrix" class="qr-code"></div>
+                <a href="ar-matrix-debug.html" class="link">ar-matrix-debug.html</a>
+            </div>
+            
+            <!-- 🔧 Fixed Positioning -->
+            <div class="qr-card">
                 <h3>🔧 Fixed Positioning</h3>
-                <p><strong>ПРАВИЛЬНОЕ</strong> позиционирование в AR<br>
-                Hit-testing + референсные пространства</p>
+                <p>Hit-testing + референсные пространства</p>
                 <div id="qr-fixed" class="qr-code"></div>
                 <a href="ar-fixed-positioning.html" class="link">ar-fixed-positioning.html</a>
             </div>
@@ -198,19 +224,9 @@
             <!-- ✅ Working AR -->
             <div class="qr-card">
                 <h3>✅ Working AR</h3>
-                <p>Рабочая версия с креслом chair-modern.glb<br>
-                Hit-testing и правильное размещение</p>
+                <p>Рабочая версия с креслом chair-modern.glb</p>
                 <div id="qr-working" class="qr-code"></div>
                 <a href="chair-working.html" class="link">chair-working.html</a>
-            </div>
-            
-            <!-- 🔍 Debug Render -->
-            <div class="qr-card">
-                <h3>🔍 Debug Render</h3>
-                <p>Диагностика рендеринга и WebGL<br>
-                Показывает проблему с видимостью</p>
-                <div id="qr-debug" class="qr-code"></div>
-                <a href="debug-render.html" class="link">debug-render.html</a>
             </div>
         </div>
         
@@ -231,6 +247,21 @@
                 name: 'Simple Test'
             },
             {
+                id: 'qr-viewer',
+                url: baseURL + '/ar-viewer-pose.html',
+                name: 'Viewer Pose'
+            },
+            {
+                id: 'qr-spaces',
+                url: baseURL + '/ar-debug-spaces.html',
+                name: 'Debug Spaces'
+            },
+            {
+                id: 'qr-matrix',
+                url: baseURL + '/ar-matrix-debug.html',
+                name: 'Matrix Debug'
+            },
+            {
                 id: 'qr-fixed', 
                 url: baseURL + '/ar-fixed-positioning.html',
                 name: 'Fixed Positioning'
@@ -239,11 +270,6 @@
                 id: 'qr-working',
                 url: baseURL + '/chair-working.html', 
                 name: 'Working AR'
-            },
-            {
-                id: 'qr-debug',
-                url: baseURL + '/debug-render.html',
-                name: 'Debug Render'
             }
         ];
         

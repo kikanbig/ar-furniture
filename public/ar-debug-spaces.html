@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 AR Debug Spaces | Тестирование всех reference spaces</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #9c27b0, #673ab7);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 11px;
+            max-height: 350px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 2px solid #9c27b0;
+            position: relative;
+            z-index: 9999;
+        }
+        
+        .hidden { display: none; }
+        
+        .status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #9c27b0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            z-index: 9999;
+            max-width: 180px;
+        }
+        
+        .space-info {
+            background: rgba(156, 39, 176, 0.1);
+            border: 1px solid #9c27b0;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 AR Debug Spaces</h1>
+    <p>Тестирование ВСЕХ доступных reference spaces</p>
+    
+    <button id="start-btn" class="start-btn">
+        🔍 ЗАПУСТИТЬ DEBUG SPACES
+    </button>
+    
+    <div id="log" class="log">
+        📝 Debug Spaces готов...<br>
+        🎯 Протестируем ВСЕ способы размещения объектов<br>
+    </div>
+    
+    <div id="status" class="status hidden">
+        ⏱️ Frame: 0<br>
+        📦 Spaces: 0<br>
+        🎯 Objects: 0
+    </div>
+
+    <script>
+        let session = null;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let referenceSpaces = {};
+        let frameCount = 0;
+        let objects = [];
+        
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function startDebugSpaces() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '🔄 Запуск...';
+            
+            try {
+                addLog('🔍 === DEBUG ALL REFERENCE SPACES ===');
+                
+                // WebXR Polyfill
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    const polyfill = new WebXRPolyfill();
+                    addLog('🔧 WebXR Polyfill активирован');
+                }
+                
+                if (!navigator.xr) {
+                    throw new Error('WebXR недоступен');
+                }
+                
+                // Создание AR сессии
+                session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local'],
+                    optionalFeatures: ['local-floor', 'bounded-floor', 'unbounded']
+                });
+                
+                addLog('✅ AR сессия создана');
+                
+                // Тестируем ВСЕ reference spaces
+                await testAllReferenceSpaces();
+                
+                // Настройка рендерера
+                await setupRenderer();
+                setupScene();
+                
+                // Создаем объекты для каждого working space
+                await createObjectsForSpaces();
+                
+                // Запуск
+                session.requestAnimationFrame(onXRFrame);
+                
+                startBtn.innerHTML = '✅ DEBUG АКТИВЕН';
+                status.classList.remove('hidden');
+                
+                addLog('🎉 Debug Spaces запущен!');
+                
+            } catch (error) {
+                addLog('❌ ОШИБКА: ' + error.message);
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🔍 ЗАПУСТИТЬ DEBUG SPACES';
+            }
+        }
+
+        async function testAllReferenceSpaces() {
+            addLog('🔍 === ТЕСТИРОВАНИЕ REFERENCE SPACES ===');
+            
+            const spacesToTest = [
+                'viewer',      // Viewer space - привязан к голове
+                'local',       // Local space - tracking origin
+                'local-floor', // Local floor space - на полу
+                'bounded-floor', // Bounded floor space
+                'unbounded'    // Unbounded space
+            ];
+            
+            for (const spaceName of spacesToTest) {
+                try {
+                    const space = await session.requestReferenceSpace(spaceName);
+                    referenceSpaces[spaceName] = space;
+                    addLog(`✅ ${spaceName} space - ДОСТУПЕН`);
+                } catch (error) {
+                    addLog(`❌ ${spaceName} space - НЕ ДОСТУПЕН: ${error.message}`);
+                }
+            }
+            
+            const availableSpaces = Object.keys(referenceSpaces);
+            addLog(`📊 Доступно spaces: ${availableSpaces.length} из ${spacesToTest.length}`);
+            addLog(`📋 Доступные: ${availableSpaces.join(', ')}`);
+        }
+
+        async function setupRenderer() {
+            addLog('🔧 Настройка рендерера...');
+            
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl', { xrCompatible: true });
+            
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                context: gl,
+                alpha: true
+            });
+            
+            renderer.xr.enabled = true;
+            renderer.xr.setSession(session);
+            
+            const baseLayer = new XRWebGLLayer(session, gl);
+            await session.updateRenderState({ baseLayer: baseLayer });
+            
+            addLog('✅ Рендерер готов');
+        }
+
+        function setupScene() {
+            addLog('🎨 Создание сцены...');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera();
+            
+            // Максимальное освещение
+            const light = new THREE.AmbientLight(0xffffff, 5.0);
+            scene.add(light);
+            
+            addLog('✅ Сцена готова');
+        }
+
+        async function createObjectsForSpaces() {
+            addLog('📦 === СОЗДАНИЕ ОБЪЕКТОВ ДЛЯ КАЖДОГО SPACE ===');
+            
+            const colors = [
+                0xFF0000, // Красный
+                0x00FF00, // Зеленый
+                0x0000FF, // Синий
+                0xFFFF00, // Желтый
+                0xFF00FF  // Фиолетовый
+            ];
+            
+            let colorIndex = 0;
+            
+            // Создаем объект для каждого доступного space
+            for (const [spaceName, space] of Object.entries(referenceSpaces)) {
+                const color = colors[colorIndex % colors.length];
+                
+                // Геометрия - куб с эмиссией
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.3
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                
+                // Размещение объекта зависит от типа space
+                let position;
+                switch (spaceName) {
+                    case 'viewer':
+                        position = new THREE.Vector3(0, 0, -0.5); // 50см перед головой
+                        break;
+                    case 'local':
+                        position = new THREE.Vector3(0, 0, -1); // 1м от origin
+                        break;
+                    case 'local-floor':
+                        position = new THREE.Vector3(0, 0.5, -1); // 50см над полом
+                        break;
+                    case 'bounded-floor':
+                        position = new THREE.Vector3(0, 0.3, -0.8);
+                        break;
+                    case 'unbounded':
+                        position = new THREE.Vector3(0, 0, -1.2);
+                        break;
+                    default:
+                        position = new THREE.Vector3(0, 0, -1);
+                }
+                
+                cube.position.copy(position);
+                scene.add(cube);
+                
+                objects.push({
+                    object: cube,
+                    spaceName: spaceName,
+                    space: space,
+                    color: `#${color.toString(16).padStart(6, '0')}`,
+                    position: position.clone()
+                });
+                
+                addLog(`✅ ${spaceName}: куб ${objects[objects.length-1].color} в (${position.x}, ${position.y}, ${position.z})`);
+                colorIndex++;
+            }
+            
+            addLog(`📦 Создано объектов: ${objects.length}`);
+            
+            // Дополнительные объекты для надежности
+            if (objects.length > 0) {
+                addLog('📦 === ДОПОЛНИТЕЛЬНЫЕ ОБЪЕКТЫ ===');
+                
+                // Огромный куб в центре
+                const hugeCube = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 2, 2),
+                    new THREE.MeshBasicMaterial({ color: 0xFFFFFF, emissive: 0x333333 })
+                );
+                hugeCube.position.set(0, 0, 0);
+                scene.add(hugeCube);
+                objects.push({
+                    object: hugeCube,
+                    spaceName: 'origin',
+                    color: '#ffffff',
+                    position: new THREE.Vector3(0, 0, 0)
+                });
+                addLog('✅ Огромный белый куб в origin (0, 0, 0)');
+                
+                // Светящаяся сфера
+                const sphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.3, 16, 16),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0x00FFFF, 
+                        emissive: 0x00FFFF,
+                        emissiveIntensity: 0.8
+                    })
+                );
+                sphere.position.set(0, 1, -0.5);
+                scene.add(sphere);
+                objects.push({
+                    object: sphere,
+                    spaceName: 'high',
+                    color: '#00ffff',
+                    position: new THREE.Vector3(0, 1, -0.5)
+                });
+                addLog('✅ Светящаяся голубая сфера высоко (0, 1, -0.5)');
+            }
+            
+            addLog(`📊 ИТОГО объектов: ${objects.length}`);
+        }
+
+        function onXRFrame(time, frame) {
+            session.requestAnimationFrame(onXRFrame);
+            frameCount++;
+            
+            // Обновляем статус
+            status.innerHTML = `⏱️ Frame: ${frameCount}<br>📦 Spaces: ${Object.keys(referenceSpaces).length}<br>🎯 Objects: ${objects.length}`;
+            
+            // Логирование каждые 60 кадров
+            if (frameCount % 60 === 0) {
+                addLog(`🔄 Frame ${frameCount} - рендеринг ${objects.length} объектов`);
+                
+                if (frameCount === 60) {
+                    addLog('👀 ИЩИТЕ ОБЪЕКТЫ:');
+                    objects.forEach((item, index) => {
+                        addLog(`  ${item.color} куб (${item.spaceName}): ${item.position.x.toFixed(1)}, ${item.position.y.toFixed(1)}, ${item.position.z.toFixed(1)}`);
+                    });
+                }
+                
+                if (frameCount === 180) {
+                    addLog('🤔 Все еще не видно объекты?');
+                    addLog('💡 Попробуйте:');
+                    addLog('- Поворачиваться МЕДЛЕННО');
+                    addLog('- Наклонять телефон вверх/вниз');
+                    addLog('- Подходить/отходить от стен');
+                    addLog('- Движения головой для активации tracking');
+                }
+                
+                // Проверяем viewer poses для доступных spaces
+                if (frameCount === 120) {
+                    addLog('🔍 === ПРОВЕРКА VIEWER POSES ===');
+                    for (const [spaceName, space] of Object.entries(referenceSpaces)) {
+                        try {
+                            const pose = frame.getViewerPose(space);
+                            if (pose) {
+                                const pos = pose.transform.position;
+                                addLog(`👁️ ${spaceName}: viewer в (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
+                            } else {
+                                addLog(`❌ ${spaceName}: viewer pose недоступен`);
+                            }
+                        } catch (error) {
+                            addLog(`❌ ${spaceName}: ошибка viewer pose - ${error.message}`);
+                        }
+                    }
+                }
+            }
+            
+            // Анимация для заметности
+            const rotationSpeed = time * 0.001;
+            objects.forEach((item, index) => {
+                if (item.object && item.object.rotation) {
+                    item.object.rotation.x = rotationSpeed * (index + 1);
+                    item.object.rotation.y = rotationSpeed * (index + 1) * 1.5;
+                    item.object.rotation.z = rotationSpeed * (index + 1) * 0.5;
+                }
+                
+                // Пульсация для светящихся объектов
+                if (item.spaceName === 'high' && item.object.scale) {
+                    const pulse = 1 + Math.sin(time * 0.003 * (index + 1)) * 0.3;
+                    item.object.scale.set(pulse, pulse, pulse);
+                }
+            });
+            
+            try {
+                renderer.render(scene, camera);
+            } catch (error) {
+                if (frameCount < 5) {
+                    addLog('❌ ОШИБКА РЕНДЕРИНГА: ' + error.message);
+                }
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startDebugSpaces);
+            addLog('🔍 Debug Spaces готов к запуску');
+            addLog('🎯 Протестируем ВСЕ reference spaces одновременно');
+        });
+    </script>
+</body>
+</html>

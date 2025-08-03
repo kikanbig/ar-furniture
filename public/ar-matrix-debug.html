@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧮 AR Matrix Debug | Полная диагностика координат</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 2px solid #ff9800;
+            position: relative;
+            z-index: 9999;
+        }
+        
+        .hidden { display: none; }
+        
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #ff9800;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            z-index: 9999;
+            max-width: 250px;
+            border: 1px solid #ff9800;
+        }
+        
+        .matrix {
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            color: #ffa726;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            z-index: 9999;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #ff9800;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧮 AR Matrix Debug</h1>
+    <p>ПОЛНАЯ диагностика всех матриц и координат</p>
+    
+    <button id="start-btn" class="start-btn">
+        🧮 ЗАПУСТИТЬ MATRIX DEBUG
+    </button>
+    
+    <div id="log" class="log">
+        📝 Matrix Debug готов...<br>
+        🎯 Покажем ВСЕ матрицы и координаты<br>
+    </div>
+    
+    <div id="debug-panel" class="debug-panel hidden">
+        <div id="debug-info">Debug info...</div>
+    </div>
+    
+    <div id="controls" class="controls hidden">
+        <button id="dump-matrices" class="btn">📊 DUMP MATRICES</button>
+        <button id="test-render" class="btn">🎨 TEST RENDER</button>
+        <button id="toggle-wireframe" class="btn">🔲 WIREFRAME</button>
+    </div>
+
+    <script>
+        let session = null;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let referenceSpace = null;
+        let frameCount = 0;
+        let objects = [];
+        let wireframeMode = false;
+        let testScene = null;
+        
+        const log = document.getElementById('log');
+        const debugPanel = document.getElementById('debug-panel');
+        const debugInfo = document.getElementById('debug-info');
+        const controls = document.getElementById('controls');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function startMatrixDebug() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '🔄 Запуск...';
+            
+            try {
+                addLog('🧮 === MATRIX DEBUG НАЧАТ ===');
+                addLog('🎯 Покажем ВСЕ координаты, матрицы, трансформации');
+                
+                // WebXR Polyfill
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    const polyfill = new WebXRPolyfill();
+                    addLog('🔧 WebXR Polyfill активирован');
+                }
+                
+                if (!navigator.xr) {
+                    throw new Error('WebXR недоступен');
+                }
+                
+                // Информация о браузере и устройстве
+                addLog('📱 === DEVICE INFO ===');
+                addLog('User Agent: ' + navigator.userAgent.substring(0, 100));
+                addLog('Platform: ' + navigator.platform);
+                addLog('Pixel Ratio: ' + window.devicePixelRatio);
+                addLog('Screen: ' + screen.width + 'x' + screen.height);
+                addLog('Viewport: ' + window.innerWidth + 'x' + window.innerHeight);
+                
+                // Создание AR сессии
+                session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local']
+                });
+                
+                addLog('✅ AR сессия создана');
+                addLog('Session: ' + JSON.stringify({
+                    inputSources: session.inputSources.length,
+                    visibilityState: session.visibilityState,
+                    renderState: session.renderState ? 'exists' : 'null'
+                }));
+                
+                // Reference space
+                referenceSpace = await session.requestReferenceSpace('local');
+                addLog('✅ Local reference space получен');
+                
+                // Настройка рендерера с диагностикой
+                await setupRendererWithDebug();
+                setupSceneWithDebug();
+                createDebugObjects();
+                
+                // Запуск
+                session.requestAnimationFrame(onXRFrame);
+                
+                startBtn.innerHTML = '✅ MATRIX DEBUG АКТИВЕН';
+                debugPanel.classList.remove('hidden');
+                controls.classList.remove('hidden');
+                
+                setupControls();
+                
+                addLog('🎉 Matrix Debug запущен!');
+                addLog('📊 Смотрите панель справа для live debug info');
+                
+            } catch (error) {
+                addLog('❌ ОШИБКА: ' + error.message);
+                addLog('Stack: ' + error.stack);
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🧮 ЗАПУСТИТЬ MATRIX DEBUG';
+            }
+        }
+
+        async function setupRendererWithDebug() {
+            addLog('🔧 === RENDERER DEBUG ===');
+            
+            const canvas = document.createElement('canvas');
+            addLog('Canvas создан: ' + canvas.width + 'x' + canvas.height);
+            
+            const gl = canvas.getContext('webgl', { 
+                xrCompatible: true,
+                alpha: true,
+                antialias: true,
+                depth: true,
+                stencil: false,
+                preserveDrawingBuffer: true, // Для debug
+                powerPreference: "high-performance"
+            });
+            
+            if (!gl) {
+                throw new Error('WebGL контекст не создан!');
+            }
+            
+            addLog('WebGL контекст создан');
+            addLog('WebGL версия: ' + gl.getParameter(gl.VERSION));
+            addLog('WebGL vendor: ' + gl.getParameter(gl.VENDOR));
+            addLog('WebGL renderer: ' + gl.getParameter(gl.RENDERER));
+            addLog('WebGL extensions: ' + gl.getSupportedExtensions().length);
+            
+            // Three.js рендерер
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                context: gl,
+                alpha: true,
+                antialias: true,
+                logarithmicDepthBuffer: false,
+                precision: "highp"
+            });
+            
+            addLog('THREE.WebGLRenderer создан');
+            addLog('Renderer info: ' + JSON.stringify({
+                autoUpdate: renderer.info.autoUpdate,
+                programs: renderer.info.programs ? renderer.info.programs.length : 'null'
+            }));
+            
+            // XR настройки
+            renderer.xr.enabled = true;
+            renderer.xr.setSession(session);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Отключаем some optimizations для debug
+            renderer.sortObjects = false;
+            renderer.autoClear = true;
+            
+            addLog('XR настройки применены');
+            
+            // XR Base Layer
+            const baseLayer = new XRWebGLLayer(session, gl, {
+                antialias: true,
+                depth: true,
+                stencil: false,
+                alpha: true,
+                multiview: false
+            });
+            
+            await session.updateRenderState({ baseLayer: baseLayer });
+            
+            addLog('XRWebGLLayer создан');
+            addLog('Framebuffer: ' + baseLayer.framebufferWidth + 'x' + baseLayer.framebufferHeight);
+            addLog('Viewport: ' + JSON.stringify(baseLayer.getViewport ? 'supported' : 'not supported'));
+            
+            // Диагностика WebGL capabilities
+            addLog('📊 WebGL Capabilities:');
+            addLog('- Max texture size: ' + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+            addLog('- Max viewport: ' + gl.getParameter(gl.MAX_VIEWPORT_DIMS));
+            addLog('- Max vertex attribs: ' + gl.getParameter(gl.MAX_VERTEX_ATTRIBS));
+            addLog('- Max varying vectors: ' + gl.getParameter(gl.MAX_VARYING_VECTORS));
+        }
+
+        function setupSceneWithDebug() {
+            addLog('🎨 === SCENE DEBUG ===');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 1, 0.01, 100);
+            
+            addLog('Scene создана, UUID: ' + scene.uuid);
+            addLog('Camera создана: fov=' + camera.fov + ', near=' + camera.near + ', far=' + camera.far);
+            
+            // Максимальное освещение + дополнительные источники
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
+            scene.add(ambientLight);
+            addLog('Ambient light добавлен (intensity: 2.0)');
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 3.0);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            addLog('Directional light добавлен (intensity: 3.0)');
+            
+            // Hemisphere light для soft lighting
+            const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
+            scene.add(hemisphereLight);
+            addLog('Hemisphere light добавлен');
+            
+            addLog('Scene setup завершен, children: ' + scene.children.length);
+        }
+
+        function createDebugObjects() {
+            addLog('📦 === DEBUG OBJECTS ===');
+            
+            // 1. БОЛЬШОЙ WIREFRAME куб в origin - БЕЗ материала, только edges
+            const wireframeGeometry = new THREE.EdgesGeometry(new THREE.BoxGeometry(3, 3, 3));
+            const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+            const wireframeCube = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+            wireframeCube.position.set(0, 0, 0);
+            scene.add(wireframeCube);
+            objects.push({
+                object: wireframeCube,
+                name: 'wireframe-origin',
+                type: 'wireframe'
+            });
+            addLog('✅ Wireframe куб в origin (0, 0, 0)');
+            
+            // 2. ПРОСТЫЕ ТОЧКИ в пространстве
+            const pointsGeometry = new THREE.BufferGeometry();
+            const pointsPositions = new Float32Array([
+                0, 0, -0.5,  // 50cm перед origin
+                0, 0, -1,    // 1m перед origin
+                0, 0, -2,    // 2m перед origin
+                1, 0, -1,    // справа
+                -1, 0, -1,   // слева
+                0, 1, -1,    // сверху
+                0, -1, -1    // снизу
+            ]);
+            pointsGeometry.setAttribute('position', new THREE.BufferAttribute(pointsPositions, 3));
+            
+            const pointsMaterial = new THREE.PointsMaterial({ 
+                color: 0xff0000, 
+                size: 20,  // Большие точки
+                sizeAttenuation: false // Размер не зависит от расстояния
+            });
+            const points = new THREE.Points(pointsGeometry, pointsMaterial);
+            scene.add(points);
+            objects.push({
+                object: points,
+                name: 'debug-points',
+                type: 'points'
+            });
+            addLog('✅ 7 красных точек в ключевых позициях');
+            
+            // 3. COORDINATE AXES - показывают ориентацию
+            const axesHelper = new THREE.AxesHelper(2);
+            scene.add(axesHelper);
+            objects.push({
+                object: axesHelper,
+                name: 'axes',
+                type: 'helper'
+            });
+            addLog('✅ Coordinate axes (2m) добавлены');
+            
+            // 4. ПРОСТОЙ BASIC куб с ОЧЕНЬ яркими цветами
+            const basicGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const basicMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: false,
+                fog: false,
+                depthTest: false, // Отключаем depth test
+                depthWrite: false // Отключаем depth write
+            });
+            const basicCube = new THREE.Mesh(basicGeometry, basicMaterial);
+            basicCube.position.set(0, 0, -1);
+            basicCube.renderOrder = 1000; // Рендерим поверх всего
+            scene.add(basicCube);
+            objects.push({
+                object: basicCube,
+                name: 'basic-cube',
+                type: 'basic'
+            });
+            addLog('✅ Basic куб (no depth test) в (0, 0, -1)');
+            
+            // 5. SCREEN-SPACE quad - объект в экранных координатах
+            const screenGeometry = new THREE.PlaneGeometry(0.2, 0.2);
+            const screenMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide,
+                depthTest: false,
+                depthWrite: false
+            });
+            const screenQuad = new THREE.Mesh(screenGeometry, screenMaterial);
+            screenQuad.position.set(0, 0, -0.3); // Очень близко
+            screenQuad.renderOrder = 999;
+            scene.add(screenQuad);
+            objects.push({
+                object: screenQuad,
+                name: 'screen-quad',
+                type: 'screen'
+            });
+            addLog('✅ Screen quad (очень близко) в (0, 0, -0.3)');
+            
+            addLog(`📊 Всего debug объектов: ${objects.length}`);
+            addLog('🎯 Типы: wireframe, points, helper, basic, screen');
+        }
+
+        function dumpMatrices(frame) {
+            addLog('🧮 === MATRIX DUMP ===');
+            
+            try {
+                // Viewer pose
+                const viewerPose = frame.getViewerPose(referenceSpace);
+                if (viewerPose) {
+                    const transform = viewerPose.transform;
+                    addLog('👁️ Viewer Transform:');
+                    addLog(`Position: (${transform.position.x.toFixed(3)}, ${transform.position.y.toFixed(3)}, ${transform.position.z.toFixed(3)})`);
+                    addLog(`Orientation: (${transform.orientation.x.toFixed(3)}, ${transform.orientation.y.toFixed(3)}, ${transform.orientation.z.toFixed(3)}, ${transform.orientation.w.toFixed(3)})`);
+                    
+                    // Matrix
+                    const matrix = transform.matrix;
+                    addLog('Matrix:');
+                    for (let i = 0; i < 4; i++) {
+                        const row = [];
+                        for (let j = 0; j < 4; j++) {
+                            row.push(matrix[i * 4 + j].toFixed(3));
+                        }
+                        addLog(`[${row.join(', ')}]`);
+                    }
+                    
+                    // Views
+                    addLog('👁️ Views: ' + viewerPose.views.length);
+                    viewerPose.views.forEach((view, index) => {
+                        addLog(`View ${index}:`);
+                        addLog(`  Eye: ${view.eye}`);
+                        addLog(`  Transform: (${view.transform.position.x.toFixed(3)}, ${view.transform.position.y.toFixed(3)}, ${view.transform.position.z.toFixed(3)})`);
+                        
+                        const projMatrix = view.projectionMatrix;
+                        addLog(`  Projection Matrix:`);
+                        for (let i = 0; i < 4; i++) {
+                            const row = [];
+                            for (let j = 0; j < 4; j++) {
+                                row.push(projMatrix[i * 4 + j].toFixed(3));
+                            }
+                            addLog(`    [${row.join(', ')}]`);
+                        }
+                    });
+                } else {
+                    addLog('❌ Viewer pose недоступен');
+                }
+                
+                // Three.js camera info
+                addLog('📷 Three.js Camera:');
+                addLog(`Position: (${camera.position.x.toFixed(3)}, ${camera.position.y.toFixed(3)}, ${camera.position.z.toFixed(3)})`);
+                addLog(`Rotation: (${camera.rotation.x.toFixed(3)}, ${camera.rotation.y.toFixed(3)}, ${camera.rotation.z.toFixed(3)})`);
+                addLog(`Matrix World:`);
+                const camMatrix = camera.matrixWorld.elements;
+                for (let i = 0; i < 4; i++) {
+                    const row = [];
+                    for (let j = 0; j < 4; j++) {
+                        row.push(camMatrix[i * 4 + j].toFixed(3));
+                    }
+                    addLog(`  [${row.join(', ')}]`);
+                }
+                
+                // Objects info
+                addLog('📦 Objects:');
+                objects.forEach((item, index) => {
+                    const obj = item.object;
+                    const pos = obj.position;
+                    const visible = obj.visible;
+                    addLog(`  ${index}: ${item.name} (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) visible=${visible}`);
+                });
+                
+            } catch (error) {
+                addLog('❌ Ошибка matrix dump: ' + error.message);
+            }
+        }
+
+        function onXRFrame(time, frame) {
+            session.requestAnimationFrame(onXRFrame);
+            frameCount++;
+            
+            // Live debug info
+            try {
+                const viewerPose = frame.getViewerPose(referenceSpace);
+                let debugText = `Frame: ${frameCount}<br>Objects: ${objects.length}<br>`;
+                
+                if (viewerPose) {
+                    const pos = viewerPose.transform.position;
+                    debugText += `Viewer: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})<br>`;
+                    debugText += `Views: ${viewerPose.views.length}<br>`;
+                } else {
+                    debugText += `Viewer: НЕДОСТУПЕН<br>`;
+                }
+                
+                if (renderer && renderer.info) {
+                    const info = renderer.info;
+                    debugText += `Calls: ${info.render.calls}<br>`;
+                    debugText += `Triangles: ${info.render.triangles}<br>`;
+                    debugText += `Points: ${info.render.points}<br>`;
+                    debugText += `Lines: ${info.render.lines}<br>`;
+                }
+                
+                debugInfo.innerHTML = debugText;
+                
+            } catch (error) {
+                debugInfo.innerHTML = `Error: ${error.message}`;
+            }
+            
+            // Логирование каждые 60 кадров
+            if (frameCount % 60 === 0) {
+                addLog(`🔄 Frame ${frameCount} - рендеринг ${objects.length} объектов`);
+                
+                if (frameCount === 60) {
+                    dumpMatrices(frame);
+                }
+                
+                if (frameCount === 180) {
+                    addLog('🔍 === RENDER STATE CHECK ===');
+                    addLog('Scene children: ' + scene.children.length);
+                    addLog('Camera matrix auto update: ' + camera.matrixAutoUpdate);
+                    addLog('Renderer auto clear: ' + renderer.autoClear);
+                    addLog('Renderer sort objects: ' + renderer.sortObjects);
+                    
+                    // Проверяем, действительно ли объекты в frustum
+                    const frustum = new THREE.Frustum();
+                    const matrix = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+                    frustum.setFromProjectionMatrix(matrix);
+                    
+                    objects.forEach((item, index) => {
+                        const inFrustum = frustum.containsPoint(item.object.position);
+                        addLog(`  ${item.name}: in frustum = ${inFrustum}`);
+                    });
+                }
+            }
+            
+            // Анимация для заметности
+            const rotationSpeed = time * 0.001;
+            objects.forEach((item, index) => {
+                if (item.object && item.object.rotation && item.type !== 'helper') {
+                    item.object.rotation.x = rotationSpeed * (index + 1);
+                    item.object.rotation.y = rotationSpeed * (index + 1) * 1.5;
+                }
+            });
+            
+            try {
+                renderer.render(scene, camera);
+            } catch (error) {
+                if (frameCount < 5) {
+                    addLog('❌ ОШИБКА РЕНДЕРИНГА: ' + error.message);
+                }
+            }
+        }
+
+        function setupControls() {
+            document.getElementById('dump-matrices').addEventListener('click', function() {
+                if (frameCount > 0) {
+                    addLog('🧮 Manual matrix dump requested...');
+                    // Будет выполнено в следующем frame
+                }
+            });
+            
+            document.getElementById('test-render').addEventListener('click', function() {
+                addLog('🎨 Testing non-XR render...');
+                // Создаем обычную сцену для сравнения
+                testNonXRRender();
+            });
+            
+            document.getElementById('toggle-wireframe').addEventListener('click', function() {
+                wireframeMode = !wireframeMode;
+                objects.forEach(item => {
+                    if (item.object && item.object.material) {
+                        item.object.material.wireframe = wireframeMode;
+                    }
+                });
+                addLog(`🔲 Wireframe mode: ${wireframeMode ? 'ON' : 'OFF'}`);
+            });
+        }
+
+        function testNonXRRender() {
+            addLog('🎨 === NON-XR RENDER TEST ===');
+            
+            try {
+                // Временно отключаем XR
+                const tempRenderer = new THREE.WebGLRenderer({ alpha: true });
+                tempRenderer.setSize(300, 300);
+                
+                const tempScene = new THREE.Scene();
+                const tempCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+                tempCamera.position.z = 2;
+                
+                const tempLight = new THREE.AmbientLight(0xffffff, 1);
+                tempScene.add(tempLight);
+                
+                const tempCube = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                );
+                tempScene.add(tempCube);
+                
+                tempRenderer.render(tempScene, tempCamera);
+                
+                addLog('✅ Non-XR render успешен - Three.js работает');
+                addLog('🔧 Проблема специфична для XR режима');
+                
+                // Очистка
+                tempRenderer.dispose();
+                
+            } catch (error) {
+                addLog('❌ Non-XR render failed: ' + error.message);
+                addLog('🔧 Проблема в самом Three.js или WebGL');
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startMatrixDebug);
+            addLog('🧮 Matrix Debug готов к запуску');
+            addLog('🎯 Покажем ВСЮ информацию о координатах и матрицах');
+        });
+    </script>
+</body>
+</html>
