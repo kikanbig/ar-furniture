@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 ИСПРАВЛЕННЫЙ WebXR AR | QR-коды</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .fix-notice {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #FFD700;
+        }
+        
+        .fix-notice h2 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .fix-list {
+            list-style: none;
+        }
+        
+        .fix-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .fix-list li:before {
+            content: "🔧";
+            position: absolute;
+            left: 0;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .comparison-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .comparison-card h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .comparison-card.standard h3 {
+            color: #2196F3;
+        }
+        
+        .comparison-card.webxr h3 {
+            color: #9C27B0;
+        }
+        
+        .comparison-card.fixed h3 {
+            color: #FFD700;
+        }
+        
+        .status {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .status.working {
+            color: #4CAF50;
+        }
+        
+        .status.broken {
+            color: #f44336;
+        }
+        
+        .status.fixed {
+            color: #FFD700;
+        }
+        
+        .furniture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .furniture-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .furniture-card h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .furniture-card p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        
+        .qr-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .qr-box {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 140px;
+        }
+        
+        .qr-box h4 {
+            color: #333;
+            font-size: 11px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .qr-box.standard h4 {
+            color: #2196F3;
+        }
+        
+        .qr-box.webxr h4 {
+            color: #9C27B0;
+        }
+        
+        .qr-box.fixed h4 {
+            color: #FF6B35;
+        }
+        
+        .qr-code {
+            width: 110px;
+            height: 110px;
+            margin: 0 auto;
+            border-radius: 5px;
+        }
+        
+        .loading {
+            width: 110px;
+            height: 110px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .status-badge {
+            display: block;
+            font-size: 10px;
+            margin-top: 5px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+        }
+        
+        .status-badge.working {
+            background: #4CAF50;
+        }
+        
+        .status-badge.broken {
+            background: #f44336;
+        }
+        
+        .status-badge.fixed {
+            background: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 ИСПРАВЛЕННЫЙ WebXR AR</h1>
+        <p class="subtitle">Решение проблемы "GLTFLoader is not a constructor"</p>
+        
+        <div class="fix-notice">
+            <h2>🛠️ ЧТО ИСПРАВЛЕНО:</h2>
+            <ul class="fix-list">
+                <li>Ошибка "THREE.GLTFLoader is not a constructor"</li>
+                <li>Переход на современные ES модули</li>
+                <li>Правильная загрузка Three.js библиотек</li>
+                <li>Улучшенная диагностика ошибок</li>
+                <li>Fallback для устройств без поддержки GLB</li>
+            </ul>
+        </div>
+        
+        <div class="comparison">
+            <div class="comparison-card standard">
+                <h3>📱 Стандартный AR</h3>
+                <div class="status working">✅ РАБОТАЕТ</div>
+                <p>Простой, но диван движется с камерой</p>
+            </div>
+            
+            <div class="comparison-card webxr">
+                <h3>🚀 WebXR AR v1</h3>
+                <div class="status broken">❌ ОШИБКА GLTFLoader</div>
+                <p>Профессиональный, но с техническими проблемами</p>
+            </div>
+            
+            <div class="comparison-card fixed">
+                <h3>⚡ WebXR AR v2</h3>
+                <div class="status fixed">🔧 ИСПРАВЛЕНО!</div>
+                <p>Профессиональный + исправленные ошибки</p>
+            </div>
+        </div>
+        
+        <div class="furniture-grid" id="furniture-grid">
+            <!-- QR-коды будут загружены здесь -->
+        </div>
+    </div>
+
+    <script>
+        // Загружаем данные о мебели и генерируем QR-коды
+        async function loadFurnitureQR() {
+            try {
+                const response = await fetch('/api/furniture');
+                const furniture = await response.json();
+                
+                const grid = document.getElementById('furniture-grid');
+                
+                for (const item of furniture) {
+                    const card = document.createElement('div');
+                    card.className = 'furniture-card';
+                    
+                    // Генерируем все три типа QR-кодов
+                    const [standardQR, webxrQR, webxrV2QR] = await Promise.all([
+                        fetch(`/api/qr/${item.id}`).then(r => r.json()),
+                        fetch(`/api/webxr-qr/${item.id}`).then(r => r.json()),
+                        fetch(`/api/webxr-v2-qr/${item.id}`).then(r => r.json())
+                    ]);
+                    
+                    card.innerHTML = `
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <div class="price">${item.price}</div>
+                        
+                        <div class="qr-container">
+                            <div class="qr-box standard">
+                                <h4>📱 Стандартный AR</h4>
+                                <img src="${standardQR.qrCode}" alt="Standard AR QR" class="qr-code">
+                                <span class="status-badge working">РАБОТАЕТ</span>
+                            </div>
+                            
+                            <div class="qr-box webxr">
+                                <h4>🚀 WebXR v1</h4>
+                                <img src="${webxrQR.qrCode}" alt="WebXR AR QR" class="qr-code">
+                                <span class="status-badge broken">ОШИБКА</span>
+                            </div>
+                            
+                            <div class="qr-box fixed">
+                                <h4>⚡ WebXR v2</h4>
+                                <img src="${webxrV2QR.qrCode}" alt="WebXR v2 AR QR" class="qr-code">
+                                <span class="status-badge fixed">ИСПРАВЛЕНО</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки мебели:', error);
+                document.getElementById('furniture-grid').innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <p>❌ Ошибка загрузки данных о мебели</p>
+                        <p style="opacity: 0.7; margin-top: 10px;">Попробуйте обновить страницу</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Загружаем QR-коды при загрузке страницы
+        window.addEventListener('load', loadFurnitureQR);
+    </script>
+</body>
+</html>
