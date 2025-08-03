@@ -294,11 +294,11 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera();
             
-            // Освещение для кресла
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // ОЧЕНЬ ЯРКОЕ освещение для хорошей видимости
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);  // Увеличено
             scene.add(ambientLight);
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);  // Увеличено
             directionalLight.position.set(2, 4, 3);
             directionalLight.castShadow = true;
             directionalLight.shadow.mapSize.width = 2048;
@@ -306,9 +306,14 @@
             scene.add(directionalLight);
             
             // Боковое освещение
-            const sideLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            const sideLight = new THREE.DirectionalLight(0xffffff, 0.8);  // Увеличено
             sideLight.position.set(-2, 2, 1);
             scene.add(sideLight);
+            
+            // Дополнительное освещение снизу
+            const bottomLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            bottomLight.position.set(0, -2, 0);
+            scene.add(bottomLight);
             
             // Reticle для размещения
             const reticleGeometry = new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2);
@@ -367,35 +372,44 @@
             });
         }
 
-        // Простое кресло fallback
+        // Простое кресло fallback - ОЧЕНЬ ЗАМЕТНОЕ!
         function createFallbackChair() {
             const group = new THREE.Group();
             
-            // Сиденье
-            const seatGeometry = new THREE.BoxGeometry(0.6, 0.1, 0.6);
-            const seatMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+            // БОЛЬШОЕ ЯРКОЕ СИДЕНЬЕ  
+            const seatGeometry = new THREE.BoxGeometry(1.2, 0.2, 1.2);
+            const seatMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFF6B35,  // Ярко-оранжевый
+                emissive: 0x331100  // Свечение
+            });
             const seat = new THREE.Mesh(seatGeometry, seatMaterial);
-            seat.position.y = 0.4;
+            seat.position.y = 0.6;
             seat.castShadow = true;
             group.add(seat);
             
-            // Спинка
-            const backGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.1);
-            const backMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
+            // БОЛЬШАЯ ЯРКАЯ СПИНКА
+            const backGeometry = new THREE.BoxGeometry(1.2, 1.2, 0.2);
+            const backMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFF4444,  // Ярко-красный
+                emissive: 0x220000  // Свечение
+            });
             const back = new THREE.Mesh(backGeometry, backMaterial);
-            back.position.set(0, 0.7, -0.25);
+            back.position.set(0, 1.2, -0.5);
             back.castShadow = true;
             group.add(back);
             
-            // Ножки
-            const legGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.4);
-            const legMaterial = new THREE.MeshPhongMaterial({ color: 0x2F2F2F });
+            // ТОЛСТЫЕ ЗАМЕТНЫЕ НОЖКИ
+            const legGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.6);
+            const legMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00FF00,  // Ярко-зеленый
+                emissive: 0x002200  // Свечение
+            });
             
             const legPositions = [
-                [-0.25, 0.2, -0.25],
-                [0.25, 0.2, -0.25],
-                [-0.25, 0.2, 0.25],
-                [0.25, 0.2, 0.25]
+                [-0.5, 0.3, -0.5],
+                [0.5, 0.3, -0.5],
+                [-0.5, 0.3, 0.5],
+                [0.5, 0.3, 0.5]
             ];
             
             legPositions.forEach(function(pos) {
@@ -405,8 +419,18 @@
                 group.add(leg);
             });
             
+            // ДОБАВЛЯЕМ ЯРКИЙ МАРКЕР СВЕРХУ
+            const markerGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+            const markerMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFFFF00,  // Ярко-желтый  
+                emissive: 0x333300  // Свечение
+            });
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(0, 2.0, 0);  // Высоко над креслом
+            group.add(marker);
+            
             chairTemplate = group;
-            log('🔧 Простое кресло создано');
+            log('🔧 ЯРКОЕ ЗАМЕТНОЕ кресло создано (оранжево-красно-зеленое)');
         }
 
         // Hit testing
@@ -457,17 +481,19 @@
             if (matrix && reticle.visible) {
                 chair.matrix.fromArray(matrix);
                 chair.matrixAutoUpdate = false;
-                log('🪑 Кресло размещено на поверхности');
+                log('🪑 Кресло размещено на поверхности (hit test)');
+                log('📍 Matrix: ' + matrix.slice(12, 15).map(x => x.toFixed(2)).join(', '));
             } else {
                 chair.position.set(0, -0.3, -1.5);
                 chair.matrixAutoUpdate = true;
-                log('🪑 Кресло размещено перед камерой');
+                log('🪑 Кресло размещено перед камерой (0, -0.3, -1.5)');
             }
             
             scene.add(chair);
             placedObjects.push(chair);
             
             log('🪑 Размещено кресел: ' + placedObjects.length);
+            log('🎨 Кресло должно быть ЯРКО-ОРАНЖЕВОЕ с ЖЕЛТЫМ шариком сверху!');
         }
 
         // Настройка контролов
