@@ -254,44 +254,66 @@
         function addTestObjects() {
             addLog('📦 === ДОБАВЛЕНИЕ ТЕСТОВЫХ ОБЪЕКТОВ ===');
             
-            // Большой красный куб прямо перед камерой
-            const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const cubeMaterial = new THREE.MeshPhongMaterial({ 
+            // ОГРОМНЫЕ ОБЪЕКТЫ ВЕЗДЕ ВОКРУГ КАМЕРЫ!
+            
+            // 1. ГИГАНТСКИЙ красный куб ПРЯМО ПЕРЕД КАМЕРОЙ
+            const cubeGeometry = new THREE.BoxGeometry(2, 2, 2); // В 4 РАЗА БОЛЬШЕ!
+            const cubeMaterial = new THREE.MeshBasicMaterial({ // BASIC материал без освещения
                 color: 0xFF0000,
-                emissive: 0x330000
+                transparent: false
             });
             const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-            cube.position.set(0, 0, -1); // 1 метр перед камерой
+            cube.position.set(0, 0, -3); // 3 метра перед камерой
             scene.add(cube);
             objects.push(cube);
-            addLog('✅ Красный куб добавлен в (0, 0, -1)');
+            addLog('✅ ГИГАНТСКИЙ красный куб добавлен в (0, 0, -3)');
             
-            // Зеленая сфера слева
-            const sphereGeometry = new THREE.SphereGeometry(0.3, 16, 16);
-            const sphereMaterial = new THREE.MeshPhongMaterial({ 
+            // 2. ГИГАНТСКАЯ зеленая сфера СЛЕВА
+            const sphereGeometry = new THREE.SphereGeometry(1.5, 16, 16); // В 5 РАЗ БОЛЬШЕ!
+            const sphereMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0x00FF00,
-                emissive: 0x003300
+                transparent: false
             });
             const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            sphere.position.set(-1, 0, -1);
+            sphere.position.set(-4, 0, -3); // Далеко слева
             scene.add(sphere);
             objects.push(sphere);
-            addLog('✅ Зеленая сфера добавлена в (-1, 0, -1)');
+            addLog('✅ ГИГАНТСКАЯ зеленая сфера добавлена в (-4, 0, -3)');
             
-            // Синий цилиндр справа
-            const cylinderGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8, 16);
-            const cylinderMaterial = new THREE.MeshPhongMaterial({ 
+            // 3. ГИГАНТСКИЙ синий цилиндр СПРАВА
+            const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 3, 16); // В 5 РАЗ БОЛЬШЕ!
+            const cylinderMaterial = new THREE.MeshBasicMaterial({ 
                 color: 0x0000FF,
-                emissive: 0x000033
+                transparent: false
             });
             const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-            cylinder.position.set(1, 0, -1);
+            cylinder.position.set(4, 0, -3); // Далеко справа
             scene.add(cylinder);
             objects.push(cylinder);
-            addLog('✅ Синий цилиндр добавлен в (1, 0, -1)');
+            addLog('✅ ГИГАНТСКИЙ синий цилиндр добавлен в (4, 0, -3)');
+            
+            // 4. ЖЕЛТЫЙ куб ОЧЕНЬ БЛИЗКО
+            const nearCubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const nearCubeMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+            const nearCube = new THREE.Mesh(nearCubeGeometry, nearCubeMaterial);
+            nearCube.position.set(0, 0, -0.5); // Очень близко!
+            scene.add(nearCube);
+            objects.push(nearCube);
+            addLog('✅ БЛИЗКИЙ желтый куб добавлен в (0, 0, -0.5)');
+            
+            // 5. ФИОЛЕТОВЫЙ куб ДАЛЕКО
+            const farCubeGeometry = new THREE.BoxGeometry(5, 5, 5); // ОГРОМНЫЙ!
+            const farCubeMaterial = new THREE.MeshBasicMaterial({ color: 0xFF00FF });
+            const farCube = new THREE.Mesh(farCubeGeometry, farCubeMaterial);
+            farCube.position.set(0, 0, -10); // 10 метров перед камерой
+            scene.add(farCube);
+            objects.push(farCube);
+            addLog('✅ ДАЛЕКИЙ фиолетовый куб добавлен в (0, 0, -10)');
             
             addLog('📦 Всего объектов в сцене: ' + scene.children.length);
-            addLog('🎯 ВСЕ ОБЪЕКТЫ НА РАССТОЯНИИ 1 МЕТР ПЕРЕД КАМЕРОЙ!');
+            addLog('🎯 ОБЪЕКТЫ НА РАССТОЯНИЯХ: 0.5м, 3м, 10м');
+            addLog('📏 РАЗМЕРЫ: от 0.5м до 5м');
+            addLog('🎨 BASIC материалы без освещения!');
         }
 
         function onXRFrame(time, frame) {
