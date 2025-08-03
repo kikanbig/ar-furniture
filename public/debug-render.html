@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Debug Render | AR Диагностика</title>
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- WebXR Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a5a);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .log {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .hidden { display: none; }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 AR Debug Renderer</h1>
+    <p>Диагностика рендеринга и WebGL</p>
+    
+    <button id="start-btn" class="start-btn">
+        🚀 ЗАПУСТИТЬ DEBUG AR
+    </button>
+    
+    <div id="log" class="log">
+        📝 Debug AR готов...<br>
+    </div>
+    
+    <div id="controls" class="controls hidden">
+        <button id="add-cube" class="btn">📦 ДОБАВИТЬ КУБ</button>
+        <button id="render-info" class="btn">📊 RENDER INFO</button>
+        <button id="exit-btn" class="btn">❌ ВЫХОД</button>
+    </div>
+
+    <script>
+        let session = null;
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let referenceSpace = null;
+        let objects = [];
+        let frameCount = 0;
+        
+        const log = document.getElementById('log');
+        const controls = document.getElementById('controls');
+
+        function addLog(message) {
+            console.log(message);
+            log.innerHTML += message + '<br>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function startDebugAR() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '🔄 Запуск Debug AR...';
+            
+            try {
+                addLog('🔍 === DEBUG AR ДИАГНОСТИКА ===');
+                
+                // WebXR Polyfill
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    addLog('🔧 Активация WebXR Polyfill...');
+                    const polyfill = new WebXRPolyfill();
+                }
+                
+                if (!navigator.xr) {
+                    throw new Error('WebXR недоступен');
+                }
+                
+                addLog('✅ WebXR доступен');
+                
+                // AR поддержка
+                const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (!arSupported) {
+                    throw new Error('AR не поддерживается');
+                }
+                
+                addLog('✅ AR поддерживается');
+                
+                // Создание сессии
+                session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local']
+                });
+                
+                addLog('✅ AR сессия создана');
+                
+                // Reference space
+                referenceSpace = await session.requestReferenceSpace('local');
+                addLog('✅ Reference space получен');
+                
+                // WebGL диагностика
+                await setupRenderer();
+                setupScene();
+                
+                // Добавляем тестовые объекты СРАЗУ
+                addTestObjects();
+                
+                // Запуск рендеринга
+                session.requestAnimationFrame(onXRFrame);
+                
+                // UI
+                document.getElementById('start-btn').style.display = 'none';
+                controls.classList.remove('hidden');
+                
+                setupControls();
+                
+                addLog('🎉 Debug AR запущен!');
+                addLog('📊 Смотрите диагностику рендеринга...');
+                
+            } catch (error) {
+                addLog('❌ ОШИБКА: ' + error.message);
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🚀 ЗАПУСТИТЬ DEBUG AR';
+            }
+        }
+
+        async function setupRenderer() {
+            addLog('🔧 === НАСТРОЙКА WEBGL РЕНДЕРЕРА ===');
+            
+            // Создание canvas
+            const canvas = document.createElement('canvas');
+            addLog('✅ Canvas создан');
+            
+            // WebGL контекст
+            const gl = canvas.getContext('webgl', { 
+                xrCompatible: true,
+                alpha: true,
+                antialias: true,
+                depth: true,
+                stencil: false,
+                preserveDrawingBuffer: false
+            });
+            
+            if (!gl) {
+                throw new Error('WebGL контекст не создан!');
+            }
+            
+            addLog('✅ WebGL контекст создан');
+            addLog('📊 WebGL версия: ' + gl.getParameter(gl.VERSION));
+            addLog('📊 WebGL vendor: ' + gl.getParameter(gl.VENDOR));
+            addLog('📊 WebGL renderer: ' + gl.getParameter(gl.RENDERER));
+            
+            // Three.js рендерер  
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                context: gl,
+                alpha: true,
+                antialias: true
+            });
+            
+            addLog('✅ THREE.js WebGLRenderer создан');
+            
+            // XR настройки
+            renderer.xr.enabled = true;
+            renderer.xr.setSession(session);
+            addLog('✅ XR режим включен в рендерере');
+            
+            // Pixel ratio
+            renderer.setPixelRatio(window.devicePixelRatio);
+            addLog('📊 Pixel ratio: ' + window.devicePixelRatio);
+            
+            // XR Base Layer
+            const baseLayer = new XRWebGLLayer(session, gl);
+            await session.updateRenderState({ baseLayer: baseLayer });
+            addLog('✅ XRWebGLLayer создан');
+            addLog('📊 Framebuffer size: ' + baseLayer.framebufferWidth + 'x' + baseLayer.framebufferHeight);
+            
+            // Capabilities
+            addLog('📊 WebGL max texture size: ' + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+            addLog('📊 WebGL max viewport: ' + gl.getParameter(gl.MAX_VIEWPORT_DIMS));
+        }
+
+        function setupScene() {
+            addLog('🎨 === СОЗДАНИЕ 3D СЦЕНЫ ===');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera();
+            addLog('✅ Scene и Camera созданы');
+            
+            // Очень яркое освещение
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            scene.add(ambientLight);
+            addLog('✅ Ambient light добавлен');
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            addLog('✅ Directional light добавлен');
+            
+            addLog('🎨 Сцена готова');
+        }
+
+        function addTestObjects() {
+            addLog('📦 === ДОБАВЛЕНИЕ ТЕСТОВЫХ ОБЪЕКТОВ ===');
+            
+            // Большой красный куб прямо перед камерой
+            const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const cubeMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xFF0000,
+                emissive: 0x330000
+            });
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.set(0, 0, -1); // 1 метр перед камерой
+            scene.add(cube);
+            objects.push(cube);
+            addLog('✅ Красный куб добавлен в (0, 0, -1)');
+            
+            // Зеленая сфера слева
+            const sphereGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const sphereMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00FF00,
+                emissive: 0x003300
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(-1, 0, -1);
+            scene.add(sphere);
+            objects.push(sphere);
+            addLog('✅ Зеленая сфера добавлена в (-1, 0, -1)');
+            
+            // Синий цилиндр справа
+            const cylinderGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8, 16);
+            const cylinderMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x0000FF,
+                emissive: 0x000033
+            });
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinder.position.set(1, 0, -1);
+            scene.add(cylinder);
+            objects.push(cylinder);
+            addLog('✅ Синий цилиндр добавлен в (1, 0, -1)');
+            
+            addLog('📦 Всего объектов в сцене: ' + scene.children.length);
+            addLog('🎯 ВСЕ ОБЪЕКТЫ НА РАССТОЯНИИ 1 МЕТР ПЕРЕД КАМЕРОЙ!');
+        }
+
+        function onXRFrame(time, frame) {
+            session.requestAnimationFrame(onXRFrame);
+            frameCount++;
+            
+            // Каждые 60 кадров логируем
+            if (frameCount % 60 === 0) {
+                addLog('🔄 Frame ' + frameCount + ' - рендеринг...');
+                
+                // Информация о рендерере
+                if (renderer && renderer.info) {
+                    const info = renderer.info;
+                    addLog('📊 Geometries: ' + info.memory.geometries + ', Textures: ' + info.memory.textures);
+                    addLog('📊 Calls: ' + info.render.calls + ', Triangles: ' + info.render.triangles);
+                }
+            }
+            
+            // Анимация объектов для заметности
+            if (objects.length > 0) {
+                objects[0].rotation.y = time * 0.001; // Вращение куба
+                if (objects[1]) objects[1].position.y = Math.sin(time * 0.002) * 0.2; // Покачивание сферы
+                if (objects[2]) objects[2].scale.setScalar(1 + Math.sin(time * 0.003) * 0.2); // Пульсация цилиндра
+            }
+            
+            // РЕНДЕРИНГ
+            try {
+                renderer.render(scene, camera);
+            } catch (error) {
+                if (frameCount < 5) { // Логируем только первые ошибки
+                    addLog('❌ ОШИБКА РЕНДЕРИНГА: ' + error.message);
+                }
+            }
+        }
+
+        function setupControls() {
+            document.getElementById('add-cube').addEventListener('click', function() {
+                const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: Math.random() * 0xffffff,
+                    emissive: Math.random() * 0x333333
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    -1 - Math.random()
+                );
+                scene.add(cube);
+                objects.push(cube);
+                addLog('📦 Новый куб добавлен! Всего: ' + objects.length);
+            });
+
+            document.getElementById('render-info').addEventListener('click', function() {
+                addLog('📊 === RENDER INFO ===');
+                addLog('🎬 Frame count: ' + frameCount);
+                addLog('🎨 Scene children: ' + scene.children.length);
+                addLog('📦 Test objects: ' + objects.length);
+                if (renderer && renderer.info) {
+                    const info = renderer.info;
+                    addLog('🔧 Render calls: ' + info.render.calls);
+                    addLog('🔺 Triangles: ' + info.render.triangles);
+                    addLog('🧮 Geometries: ' + info.memory.geometries);
+                    addLog('🖼️ Textures: ' + info.memory.textures);
+                }
+                addLog('🎯 ДОЛЖНЫ БЫТЬ ВИДНЫ: красный куб, зеленая сфера, синий цилиндр');
+            });
+
+            document.getElementById('exit-btn').addEventListener('click', function() {
+                session.end();
+            });
+
+            session.addEventListener('end', function() {
+                addLog('🔚 AR сессия завершена');
+                location.reload();
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('start-btn').addEventListener('click', startDebugAR);
+            addLog('🔍 Debug AR готов к запуску');
+        });
+    </script>
+</body>
+</html>

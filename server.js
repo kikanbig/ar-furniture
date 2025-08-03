@@ -348,6 +348,11 @@ app.get('/chair-working', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chair-working.html'));
 });
 
+// 🔍 DEBUG RENDER (диагностика рендеринга)
+app.get('/debug-render', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'debug-render.html'));
+});
+
 // Обработка ошибок
 app.use((err, req, res, next) => {
     console.error(err.stack);
