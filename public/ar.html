@@ -17,6 +17,7 @@
     
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     
     <!-- WebXR Polyfill -->
     <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
@@ -247,12 +248,13 @@
             debugInfo.innerHTML = '🚀 Запуск простой камеры...';
             
             try {
-                // Прямой запрос камеры с правильными настройками
+                // Прямой запрос камеры БЕЗ УВЕЛИЧЕНИЯ
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { 
                         facingMode: 'environment',
-                        width: { ideal: 640, max: 1280 },
-                        height: { ideal: 480, max: 720 }
+                        width: { min: 320, ideal: 640, max: 1920 },
+                        height: { min: 240, ideal: 480, max: 1080 },
+                        zoom: false
                     },
                     audio: false
                 });
@@ -287,16 +289,75 @@
                     arOverlay.style.zIndex = '100';
                     arOverlay.style.pointerEvents = 'none';
                     
-                    // Простой 3D диван в центре экрана
-                    const sofa3D = document.createElement('div');
-                    sofa3D.innerHTML = '🛋️';
-                    sofa3D.style.position = 'absolute';
-                    sofa3D.style.top = '50%';
-                    sofa3D.style.left = '50%';
-                    sofa3D.style.transform = 'translate(-50%, -50%) scale(3)';
-                    sofa3D.style.fontSize = '60px';
-                    sofa3D.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
-                    sofa3D.style.animation = 'float 3s ease-in-out infinite';
+                    // Контейнер для THREE.JS сцены
+                    const threeContainer = document.createElement('div');
+                    threeContainer.style.position = 'absolute';
+                    threeContainer.style.top = '0';
+                    threeContainer.style.left = '0';
+                    threeContainer.style.width = '100%';
+                    threeContainer.style.height = '100%';
+                    threeContainer.style.pointerEvents = 'none';
+                    
+                    // Настройка THREE.JS сцены
+                    const scene = new THREE.Scene();
+                    const camera3D = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setClearColor(0x000000, 0); // Прозрачный фон
+                    threeContainer.appendChild(renderer.domElement);
+                    
+                    // Освещение
+                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                    scene.add(ambientLight);
+                    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                    directionalLight.position.set(1, 1, 1);
+                    scene.add(directionalLight);
+                    
+                    // Загрузка GLB модели
+                    const loader = new THREE.GLTFLoader();
+                    let sofaModel = null;
+                    
+                    loader.load('/models/cannoli-sofa.glb', function(gltf) {
+                        sofaModel = gltf.scene;
+                        sofaModel.scale.set(0.5, 0.5, 0.5); // Масштаб модели
+                        sofaModel.position.set(0, -0.5, -2); // Позиция модели
+                        scene.add(sofaModel);
+                        
+                        // Анимация плавания
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            if (sofaModel) {
+                                sofaModel.rotation.y += 0.01; // Медленное вращение
+                                sofaModel.position.y = -0.5 + Math.sin(Date.now() * 0.002) * 0.1; // Плавание вверх-вниз
+                            }
+                            renderer.render(scene, camera3D);
+                        }
+                        animate();
+                        
+                        debugInfo.innerHTML = `✅ 3D МОДЕЛЬ ЗАГРУЖЕНА! Реальный диван Cannoli`;
+                    }, function(progress) {
+                        debugInfo.innerHTML = `📦 Загрузка 3D модели... ${Math.round((progress.loaded / progress.total) * 100)}%`;
+                    }, function(error) {
+                        console.error('Ошибка загрузки модели:', error);
+                        debugInfo.innerHTML = `❌ Ошибка загрузки 3D модели. Используем упрощенную версию.`;
+                        
+                        // Fallback - простой куб как диван
+                        const geometry = new THREE.BoxGeometry(1, 0.4, 0.6);
+                        const material = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+                        sofaModel = new THREE.Mesh(geometry, material);
+                        sofaModel.position.set(0, -0.5, -2);
+                        scene.add(sofaModel);
+                        
+                        function animate() {
+                            requestAnimationFrame(animate);
+                            sofaModel.rotation.y += 0.01;
+                            sofaModel.position.y = -0.5 + Math.sin(Date.now() * 0.002) * 0.1;
+                            renderer.render(scene, camera3D);
+                        }
+                        animate();
+                    });
+                    
+                    camera3D.position.z = 2;
                     
                     // Информация о диване
                     const sofaInfo = document.createElement('div');
@@ -316,7 +377,7 @@
                         <p style="margin: 5px 0 0 0; font-weight: bold; color: #4CAF50;">150,000 ₽</p>
                     `;
                     
-                    arOverlay.appendChild(sofa3D);
+                    arOverlay.appendChild(threeContainer);
                     arOverlay.appendChild(sofaInfo);
                     document.body.appendChild(arOverlay);
                     
@@ -333,25 +394,49 @@
                     // Кнопка поворота
                     const rotateBtn = document.createElement('button');
                     rotateBtn.innerHTML = '🔄 ПОВЕРНУТЬ';
-                    rotateBtn.style.padding = '12px 18px';
+                    rotateBtn.style.padding = '10px 15px';
                     rotateBtn.style.background = '#2196F3';
                     rotateBtn.style.color = 'white';
                     rotateBtn.style.border = 'none';
-                    rotateBtn.style.borderRadius = '10px';
-                    rotateBtn.style.fontSize = '14px';
+                    rotateBtn.style.borderRadius = '8px';
+                    rotateBtn.style.fontSize = '12px';
                     rotateBtn.style.fontWeight = 'bold';
                     rotateBtn.style.cursor = 'pointer';
                     
+                    // Кнопка масштаба
+                    const scaleBtn = document.createElement('button');
+                    scaleBtn.innerHTML = '🔍 РАЗМЕР';
+                    scaleBtn.style.padding = '10px 15px';
+                    scaleBtn.style.background = '#4CAF50';
+                    scaleBtn.style.color = 'white';
+                    scaleBtn.style.border = 'none';
+                    scaleBtn.style.borderRadius = '8px';
+                    scaleBtn.style.fontSize = '12px';
+                    scaleBtn.style.fontWeight = 'bold';
+                    scaleBtn.style.cursor = 'pointer';
+                    
                     let rotation = 0;
+                    let scale = 0.5;
+                    
                     rotateBtn.onclick = () => {
-                        rotation += 90;
-                        sofa3D.style.transform = `translate(-50%, -50%) scale(3) rotateZ(${rotation}deg)`;
+                        rotation += Math.PI / 2; // 90 градусов в радианах
+                        if (sofaModel) {
+                            sofaModel.rotation.y = rotation;
+                        }
+                    };
+                    
+                    scaleBtn.onclick = () => {
+                        scale = scale >= 1.0 ? 0.3 : scale + 0.2;
+                        if (sofaModel) {
+                            sofaModel.scale.set(scale, scale, scale);
+                        }
+                        scaleBtn.innerHTML = `🔍 ${Math.round(scale * 100)}%`;
                     };
                     
                     // Кнопка закрытия
                     const closeBtn = document.createElement('button');
                     closeBtn.innerHTML = '❌ ЗАКРЫТЬ';
-                    closeBtn.style.padding = '12px 18px';
+                    closeBtn.style.padding = '10px 15px';
                     closeBtn.style.background = '#ff4444';
                     closeBtn.style.color = 'white';
                     closeBtn.style.border = 'none';
@@ -362,6 +447,13 @@
                     
                     closeBtn.onclick = () => {
                         stream.getTracks().forEach(track => track.stop());
+                        
+                        // Очистка Three.js
+                        if (renderer) {
+                            renderer.dispose();
+                            scene.clear();
+                        }
+                        
                         document.body.removeChild(video);
                         document.body.removeChild(arOverlay);
                         document.body.removeChild(controls);
@@ -372,6 +464,7 @@
                     };
                     
                     controls.appendChild(rotateBtn);
+                    controls.appendChild(scaleBtn);
                     controls.appendChild(closeBtn);
                     document.body.appendChild(controls);
                     
