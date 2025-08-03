@@ -184,7 +184,7 @@
             <p style="margin: 10px 0 20px; opacity: 0.8;">
                 Качественное кресло в дополненной реальности
             </p>
-            <button id="start-btn" class="start-btn" onclick="initializeAR()">
+            <button id="start-btn" class="start-btn">
                 🚀 ЗАПУСТИТЬ AR КРЕСЛО
             </button>
             
@@ -246,7 +246,7 @@
         }
 
         // Инициализация AR
-        window.initializeAR = async function() {
+        async function initializeAR() {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true;
             startBtn.innerHTML = '🔄 Проверка WebXR...';
@@ -319,7 +319,13 @@
                     log('• Устройство поддерживает ARCore');
                 }
             }
-        };
+        }
+
+        // Привязка событий
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.addEventListener('click', initializeAR);
+        });
 
         // Инициализация рендерера
         async function initializeRenderer() {

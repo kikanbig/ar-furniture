@@ -126,7 +126,7 @@
         <h1>🚀 WebXR AR v2.0</h1>
         <p class="subtitle">Улучшенная версия с модулями ES<br>Исправлены ошибки загрузки!</p>
         
-        <button id="start-ar-btn" class="start-btn" onclick="startWebXRAR()">
+        <button id="start-ar-btn" class="start-btn">
             🚀 ЗАПУСТИТЬ WebXR AR v2
         </button>
         
@@ -147,7 +147,7 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         
         // Глобальная функция для кнопки
-        window.startWebXRAR = async function() {
+        async function startWebXRAR() {
             const btn = document.getElementById('start-ar-btn');
             const debugInfo = document.getElementById('debug-info');
             
@@ -532,7 +532,13 @@
                 btn.disabled = false;
                 btn.style.background = 'linear-gradient(45deg, #FF6B35, #F7931E)';
             }
-        };
+        }
+        
+        // Привязка событий
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-ar-btn');
+            startBtn.addEventListener('click', startWebXRAR);
+        });
         
         // Проверка поддержки при загрузке страницы
         window.addEventListener('load', async () => {
