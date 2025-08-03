@@ -11,6 +11,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
+    <!-- WebXR Polyfill для совместимости -->
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    
     <!-- Three.js с правильными версиями -->
     <script type="importmap">
         {
@@ -249,9 +252,16 @@
         async function initializeAR() {
             const startBtn = document.getElementById('start-btn');
             startBtn.disabled = true;
-            startBtn.innerHTML = '🔄 Проверка WebXR...';
+            startBtn.innerHTML = '🔄 Инициализация WebXR...';
 
             try {
+                // Инициализация WebXR Polyfill если доступен
+                if (window.WebXRPolyfill && !navigator.xr) {
+                    log('🔧 Инициализация WebXR Polyfill...');
+                    const polyfill = new WebXRPolyfill();
+                    log('✅ WebXR Polyfill активирован');
+                }
+                
                 // Проверка поддержки WebXR
                 if (!navigator.xr) {
                     throw new Error('WebXR не поддерживается этим браузером');

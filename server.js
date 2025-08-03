@@ -338,6 +338,11 @@ app.get('/webxr-polyfill', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'webxr-with-polyfill.html'));
 });
 
+// 🪑 ПРОСТОЕ AR КРЕСЛО (без ES Modules)
+app.get('/simple-chair', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'simple-chair-ar.html'));
+});
+
 // Обработка ошибок
 app.use((err, req, res, next) => {
     console.error(err.stack);
