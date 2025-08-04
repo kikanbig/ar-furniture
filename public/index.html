@@ -1,1 +1,140 @@
- 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪑 AR Кресло с Model-viewer</title>
+    
+    <!-- Model-viewer от Google -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer@^3.4.0/dist/model-viewer.min.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer@^3.4.0/dist/model-viewer-legacy.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .description {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+        
+        .model-viewer {
+            width: 100%;
+            height: 400px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        
+        .ar-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .ar-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .qr-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪑 AR Кресло</h1>
+        
+        <div class="description">
+            Красивое кресло в дополненной реальности<br>
+            Используйте кнопку AR для просмотра через камеру
+        </div>
+        
+        <!-- Model-viewer с AR -->
+        <model-viewer 
+            src="/models/AR-Code-1683008719374.glb"
+            alt="Красивое кресло"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            camera-controls
+            shadow-intensity="1"
+            auto-rotate
+            camera-orbit="45deg 55deg 2.5m"
+            min-camera-orbit="auto auto 1m"
+            max-camera-orbit="auto auto 3m"
+            class="model-viewer">
+            
+            <!-- Кнопка AR -->
+            <button slot="ar-button" class="ar-button">
+                🚀 Запустить AR
+            </button>
+            
+        </model-viewer>
+        
+        <div class="instructions">
+            <h3>📱 Как использовать:</h3>
+            <p>1. Нажмите кнопку "Запустить AR"</p>
+            <p>2. Разрешите доступ к камере</p>
+            <p>3. Наведите камеру на поверхность</p>
+            <p>4. Кресло появится в реальном мире!</p>
+        </div>
+        
+        <div class="qr-section">
+            <h3>📱 QR-код для мобильных устройств</h3>
+            <div class="qr-code">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://ar-furniture-production.up.railway.app/" alt="QR Code">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
